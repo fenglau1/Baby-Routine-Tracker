@@ -140,9 +140,9 @@ const UI = {
             return;
         }
 
-        records.forEach((record, index) => {
+        records.forEach((record) => {
             const el = this.createRecordElement(record);
-            this.addDeleteButton(el, tab, index, () => this.renderFullHistory(tab));
+            this.addActionButtons(el, tab, record.id, () => this.renderFullHistory(tab));
             list.appendChild(el);
         });
     },
@@ -167,7 +167,7 @@ const UI = {
             return;
         }
 
-        records.forEach((record, index) => {
+        records.forEach((record) => {
             const div = document.createElement('div');
             div.className = 'record-item';
 
@@ -194,7 +194,7 @@ const UI = {
                 <div class="record-value">${value}</div>
             `;
 
-            this.addDeleteButton(div, tab === 'appointments' ? 'appointment' : 'vaccine', index, () => this.renderHealthSection(tab));
+            this.addActionButtons(div, tab === 'appointments' ? 'appointment' : 'vaccine', record.id, () => this.renderHealthSection(tab));
             list.appendChild(div);
         });
     },

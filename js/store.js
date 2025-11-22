@@ -44,57 +44,26 @@ const Store = {
     hydrateDates() {
         this.state.babies.forEach(baby => {
             baby.dob = new Date(baby.dob);
-            baby.milkRecords.forEach(r => r.timestamp = new Date(r.timestamp));
-            baby.foodRecords.forEach(r => r.timestamp = new Date(r.timestamp));
-            baby.poopRecords.forEach(r => r.timestamp = new Date(r.timestamp));
-            baby.measurements.forEach(r => r.date = new Date(r.date));
-            baby.appointments.forEach(r => r.date = new Date(r.date));
+            const ensureId = (r) => { if (!r.id) r.id = crypto.randomUUID(); };
+
+            baby.milkRecords.forEach(r => { r.timestamp = new Date(r.timestamp); ensureId(r); });
+            baby.foodRecords.forEach(r => { r.timestamp = new Date(r.timestamp); ensureId(r); });
+            baby.poopRecords.forEach(r => { r.timestamp = new Date(r.timestamp); ensureId(r); });
+            baby.measurements.forEach(r => { r.date = new Date(r.date); ensureId(r); });
+            baby.appointments.forEach(r => { r.date = new Date(r.date); ensureId(r); });
             baby.vaccines.forEach(r => {
                 if (r.dateAdministered) r.dateAdministered = new Date(r.dateAdministered);
+                ensureId(r);
             });
         });
     },
 
-    createDefaultBaby() {
-        const newBaby = {
-            id: crypto.randomUUID(),
-            name: "My Baby",
-            dob: new Date(),
-            gender: "Boy",
-            currentWeight: 3.5,
-            currentHeight: 50,
-            profileImage: null,
-            milkRecords: [],
-            foodRecords: [],
-            poopRecords: [],
-            vaccines: [],
-            appointments: [],
-            measurements: []
-        };
-        this.state.babies.push(newBaby);
-        this.state.currentBabyId = newBaby.id;
-        this.save();
-        return newBaby;
-    },
-
-    getCurrentBaby() {
-        return this.state.babies.find(b => b.id === this.state.currentBabyId) || this.state.babies[0];
-    },
-
-    setCurrentBaby(id) {
-        this.state.currentBabyId = id;
-        this.save();
-    },
-
-    updateBaby(updates) {
-        const baby = this.getCurrentBaby();
-        Object.assign(baby, updates);
-        this.save();
-    },
+    // ... createDefaultBaby ...
 
     addMilkRecord(record) {
         const baby = this.getCurrentBaby();
         baby.milkRecords.push({
+            id: crypto.randomUUID(),
             ...record,
             timestamp: new Date(record.timestamp)
         });
@@ -104,6 +73,7 @@ const Store = {
     addFoodRecord(record) {
         const baby = this.getCurrentBaby();
         baby.foodRecords.push({
+            id: crypto.randomUUID(),
             ...record,
             timestamp: new Date(record.timestamp)
         });
@@ -113,6 +83,7 @@ const Store = {
     addPoopRecord(record) {
         const baby = this.getCurrentBaby();
         baby.poopRecords.push({
+            id: crypto.randomUUID(),
             ...record,
             timestamp: new Date(record.timestamp)
         });
@@ -121,16 +92,17 @@ const Store = {
 
     addHealthRecord(type, record) {
         const baby = this.getCurrentBaby();
+        const newRecord = {
+            id: crypto.randomUUID(),
+            ...record
+        };
+
         if (type === 'appointment') {
-            baby.appointments.push({
-                ...record,
-                date: new Date(record.date)
-            });
+            newRecord.date = new Date(record.date);
+            baby.appointments.push(newRecord);
         } else if (type === 'vaccine') {
-            baby.vaccines.push({
-                ...record,
-                dateAdministered: new Date(record.dateAdministered)
-            });
+            newRecord.dateAdministered = new Date(record.dateAdministered);
+            baby.vaccines.push(newRecord);
         }
         this.save();
     },
@@ -138,6 +110,7 @@ const Store = {
     addMeasurement(record) {
         const baby = this.getCurrentBaby();
         baby.measurements.push({
+            id: crypto.randomUUID(),
             ...record,
             date: new Date(record.date)
         });
@@ -147,14 +120,35 @@ const Store = {
         this.save();
     },
 
-    deleteRecord(type, index) {
+    deleteRecord(type, id) {
         const baby = this.getCurrentBaby();
-        if (type === 'milk') baby.milkRecords.splice(index, 1);
-        if (type === 'food') baby.foodRecords.splice(index, 1);
-        if (type === 'poop') baby.poopRecords.splice(index, 1);
-        if (type === 'appointment') baby.appointments.splice(index, 1);
-        if (type === 'vaccine') baby.vaccines.splice(index, 1);
-        if (type === 'measurement') baby.measurements.splice(index, 1);
+        const findAndRemove = (arr) => {
+            const index = arr.findIndex(r => r.id === id);
+            if (index > -1) arr.splice(index, 1);
+        };
+
+        if (type === 'milk') findAndRemove(baby.milkRecords);
+        if (type === 'food') findAndRemove(baby.foodRecords);
+        if (type === 'poop') findAndRemove(baby.poopRecords);
+        if (type === 'appointment') findAndRemove(baby.appointments);
+        if (type === 'vaccine') findAndRemove(baby.vaccines);
+        if (type === 'measurement') findAndRemove(baby.measurements);
+        this.save();
+    },
+
+    updateRecord(type, id, updates) {
+        const baby = this.getCurrentBaby();
+        const findAndUpdate = (arr) => {
+            const record = arr.find(r => r.id === id);
+            if (record) Object.assign(record, updates);
+        };
+
+        if (type === 'milk') findAndUpdate(baby.milkRecords);
+        if (type === 'food') findAndUpdate(baby.foodRecords);
+        if (type === 'poop') findAndUpdate(baby.poopRecords);
+        if (type === 'appointment') findAndUpdate(baby.appointments);
+        if (type === 'vaccine') findAndUpdate(baby.vaccines);
+        if (type === 'measurement') findAndUpdate(baby.measurements);
         this.save();
     },
 

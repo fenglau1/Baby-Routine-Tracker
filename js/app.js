@@ -205,41 +205,6 @@ const app = {
         }
     },
 
-    saveMilk() {
-        const record = {
-            timestamp: document.getElementById('milk-time').value,
-            amountML: parseFloat(document.getElementById('milk-amount').value),
-            type: document.getElementById('milk-type').value
-        };
-        Store.addMilkRecord(record);
-        this.closeModal('milk-modal');
-        UI.renderRecentHistory();
-    },
-
-    saveFood() {
-        const record = {
-            timestamp: document.getElementById('food-time').value,
-            mealType: document.getElementById('food-meal-type').value,
-            foodItem: document.getElementById('food-item').value,
-            mood: document.getElementById('food-mood').value,
-            notes: ""
-        };
-        Store.addFoodRecord(record);
-        this.closeModal('food-modal');
-        UI.renderRecentHistory();
-    },
-
-    savePoop() {
-        const record = {
-            timestamp: document.getElementById('poop-time').value,
-            color: document.getElementById('poop-color').value,
-            notes: document.getElementById('poop-notes').value
-        };
-        Store.addPoopRecord(record);
-        this.closeModal('poop-modal');
-        UI.renderRecentHistory();
-    },
-
     saveProfileUpdates() {
         const updates = {
             name: document.getElementById('edit-name').value,
@@ -255,28 +220,6 @@ const app = {
     },
 
     saveHealthRecord() {
-        const type = document.getElementById('health-type').value;
-        const title = document.getElementById('health-title').value;
-        const dateVal = document.getElementById('health-date').value;
-
-        if (!title || !dateVal) {
-            alert("Please fill in all required fields.");
-            return;
-        }
-
-        const record = {
-            title: title,
-            notes: document.getElementById('health-notes').value
-        };
-
-        if (type === 'appointment') {
-            record.date = dateVal;
-        } else {
-            record.dateAdministered = dateVal;
-            record.dose = document.getElementById('vaccine-dose').value;
-        }
-
-        Store.addHealthRecord(type, record);
         this.closeModal('add-health-modal');
         UI.renderHealthSection(type === 'appointment' ? 'appointments' : 'vaccines');
 

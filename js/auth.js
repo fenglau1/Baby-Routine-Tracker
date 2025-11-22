@@ -12,12 +12,19 @@ const Auth = {
             return;
         }
 
-        auth.onAuthStateChanged(user => {
+        auth.onAuthStateChanged(async user => {
             this.user = user;
             this.updateUI();
             if (user) {
                 console.log("User logged in:", user.email);
-                Store.syncData(); // Trigger sync on login
+                await Store.syncData(); // Trigger sync on login
+
+                // Force add baby if none exist after sync
+                if (Store.state.babies.length === 0) {
+                    app.addNewBaby();
+                    document.getElementById('create-baby-close-btn').style.display = 'none';
+                    document.querySelector('#create-baby-modal h3').textContent = 'Welcome! Add a Baby';
+                }
             } else {
                 console.log("User logged out");
             }
