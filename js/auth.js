@@ -20,6 +20,14 @@ const Auth = {
             return;
         }
 
+        // Fail-safe: If auth doesn't respond in 2 seconds, assume logged out and show login
+        setTimeout(() => {
+            if (this.user === null) {
+                console.warn("Auth timeout - forcing UI update");
+                this.updateUI();
+            }
+        }, 2000);
+
         window.auth.onAuthStateChanged(async user => {
             console.log("AuthStateChanged:", user ? user.email : "No user");
             this.user = user;
@@ -30,7 +38,11 @@ const Auth = {
 
                 try {
                     console.log("Starting sync...");
-                    await Store.syncData(); // Trigger sync on login
+                    // Add timeout to sync to prevent hanging
+                    const syncPromise = Store.syncData();
+                    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Sync timeout")), 5000));
+
+                    await Promise.race([syncPromise, timeoutPromise]);
                     console.log("Sync complete.");
                 } catch (err) {
                     console.error("Sync error in Auth:", err);

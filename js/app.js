@@ -332,10 +332,19 @@ const app = {
     },
 
     shareAccess() {
-        const email = prompt("Enter the Google email address to share this baby profile with:");
-        if (email) {
-            Store.shareBaby(email);
+        this.openModal('share-access-modal');
+    },
+
+    sendInvite() {
+        const email = document.getElementById('share-email').value;
+        if (!email) {
+            alert("Please enter an email address.");
+            return;
         }
+        Store.shareBaby(email).then(() => {
+            this.closeModal('share-access-modal');
+            document.getElementById('share-email').value = ''; // Reset
+        });
     },
 
     deleteAllData() {

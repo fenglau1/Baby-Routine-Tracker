@@ -301,8 +301,10 @@ const Store = {
             baby.sharedWith.push(email);
             this.save(); // Will trigger cloud save
             alert(`Shared ${baby.name} with ${email}`);
+            return Promise.resolve();
         } else {
             alert(`${email} already has access.`);
+            return Promise.resolve();
         }
     },
 

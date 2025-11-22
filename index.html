@@ -41,10 +41,11 @@
             <div class="header-top">
                 <button id="menu-btn" class="icon-btn" onclick="app.toggleSidebar()"><i
                         class="fa-solid fa-bars"></i></button>
-                <div class="header-title-group">
+                <div class="header-title-group" onclick="app.openBabySwitcher()" style="cursor: pointer;">
                     <h1>Baby Routine</h1>
                     <span id="current-baby-name-display"
-                        style="font-size: 14px; color: var(--secondary-text); display: block;">My Baby</span>
+                        style="font-size: 14px; color: var(--secondary-text); display: block;">My Baby <i
+                            class="fa-solid fa-chevron-down" style="font-size: 12px;"></i></span>
                 </div>
                 <button id="add-baby-header-btn" class="icon-btn" onclick="app.openBabySwitcher()"><i
                         class="fa-solid fa-users"></i></button>
@@ -588,6 +589,26 @@
                         <input type="number" id="create-height" step="0.1" placeholder="50">
                     </div>
                     <button class="primary-btn" onclick="app.saveNewBaby()">Add Baby</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Share Access Modal -->
+        <div id="share-access-modal" class="modal hidden" style="z-index: 1400;">
+            <div class="modal-content bottom-sheet">
+                <div class="modal-header">
+                    <h3>Share Access</h3>
+                    <button class="close-btn" onclick="app.closeModal('share-access-modal')"><i
+                            class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div class="modal-body">
+                    <p style="color: var(--secondary-text); margin-bottom: 15px;">Invite family members to track this
+                        baby's routine. They must sign in with Google.</p>
+                    <div class="form-group">
+                        <label>Google Email Address</label>
+                        <input type="email" id="share-email" placeholder="example@gmail.com">
+                    </div>
+                    <button class="primary-btn" onclick="app.sendInvite()">Send Invite</button>
                 </div>
             </div>
         </div>

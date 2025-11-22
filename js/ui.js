@@ -55,6 +55,7 @@ const UI = {
 
         if (!baby) {
             document.getElementById('baby-profile-card').classList.add('hidden');
+            document.getElementById('current-baby-name-display').innerHTML = 'Add Baby <i class="fa-solid fa-chevron-down" style="font-size: 12px;"></i>';
             return;
         }
 
