@@ -219,17 +219,20 @@ const Store = {
 
     // Sync Logic
     async syncData() {
-        if (!Auth.user || !db) return;
+        if (!Auth.user || !window.db) {
+            console.warn("Sync aborted: User not logged in or DB not ready");
+            return;
+        }
 
         const email = Auth.user.email;
         const uid = Auth.user.uid;
 
         try {
             // 1. Get babies owned by user
-            const ownedQuery = await db.collection('babies').where('ownerId', '==', uid).get();
+            const ownedQuery = await window.db.collection('babies').where('ownerId', '==', uid).get();
 
             // 2. Get babies shared with user
-            const sharedQuery = await db.collection('babies').where('sharedWith', 'array-contains', email).get();
+            const sharedQuery = await window.db.collection('babies').where('sharedWith', 'array-contains', email).get();
 
             const remoteBabies = [];
 
@@ -275,17 +278,17 @@ const Store = {
     },
 
     saveBabyToCloud(baby) {
-        if (!db || !Auth.user) return;
+        if (!window.db || !Auth.user) return;
 
         const cleanBaby = JSON.parse(JSON.stringify(baby)); // Clean dates to strings
 
-        db.collection('babies').doc(baby.id).set(cleanBaby)
+        window.db.collection('babies').doc(baby.id).set(cleanBaby)
             .then(() => console.log(`Baby ${baby.name} saved to cloud`))
             .catch(err => console.error("Cloud save failed", err));
     },
 
     async shareBaby(email) {
-        if (!db || !Auth.user) return;
+        if (!window.db || !Auth.user) return;
 
         const baby = this.getCurrentBaby();
         if (baby.ownerId !== Auth.user.uid) {
@@ -337,9 +340,9 @@ const Store = {
     },
 
     deleteBabyFromCloud(id) {
-        if (!db || !Auth.user) return;
+        if (!window.db || !Auth.user) return;
 
-        db.collection('babies').doc(id).delete()
+        window.db.collection('babies').doc(id).delete()
             .then(() => console.log(`Baby ${id} deleted from cloud`))
             .catch(err => console.error("Cloud delete failed", err));
     },

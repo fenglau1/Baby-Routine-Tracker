@@ -8,16 +8,23 @@ const Auth = {
 
     init() {
         console.log("Auth.init() called");
-        if (typeof auth === 'undefined' || !auth) {
+
+        // Check for file protocol
+        if (window.location.protocol === 'file:') {
+            alert("Warning: Google Sign-In may not work when opening the file directly. Please use a local server (e.g., VS Code Live Server).");
+        }
+
+        if (!window.auth) {
             console.error("Auth not initialized - Firebase not configured or script missing");
             alert("Critical Error: Firebase Auth not loaded. Please check console.");
             return;
         }
 
-        auth.onAuthStateChanged(async user => {
+        window.auth.onAuthStateChanged(async user => {
             console.log("AuthStateChanged:", user ? user.email : "No user");
             this.user = user;
             this.updateUI();
+
             if (user) {
                 console.log("User logged in:", user.email);
 
@@ -47,16 +54,18 @@ const Auth = {
     },
 
     login() {
-        if (!auth) {
+        if (!window.auth) {
             alert("Firebase not configured. Please update firebase-config.js with your Firebase credentials.");
             return;
         }
 
         const provider = new firebase.auth.GoogleAuthProvider();
-        auth.signInWithPopup(provider)
+        window.auth.signInWithPopup(provider)
             .then((result) => {
                 // User signed in
-                alert("Logged in as " + result.user.email);
+                console.log("Manual login success:", result.user.email);
+                this.user = result.user;
+                this.updateUI(); // Force UI update immediately
                 Store.syncData();
             }).catch((error) => {
                 console.error("Login failed", error);
