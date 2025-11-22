@@ -219,6 +219,43 @@ const app = {
         this.closeModal('edit-profile-modal');
     },
 
+    saveMilk() {
+        const record = {
+            timestamp: document.getElementById('milk-time').value,
+            type: document.getElementById('milk-type').value,
+            amountML: parseInt(document.getElementById('milk-amount').value)
+        };
+        Store.addMilkRecord(record);
+        this.closeModal('milk-modal');
+        UI.renderRecentHistory();
+        UI.renderFullHistory('milk');
+    },
+
+    saveFood() {
+        const record = {
+            timestamp: document.getElementById('food-time').value,
+            mealType: document.getElementById('food-meal-type').value,
+            foodItem: document.getElementById('food-item').value || 'Unknown',
+            mood: document.getElementById('food-mood').value
+        };
+        Store.addFoodRecord(record);
+        this.closeModal('food-modal');
+        UI.renderRecentHistory();
+        UI.renderFullHistory('food');
+    },
+
+    savePoop() {
+        const record = {
+            timestamp: document.getElementById('poop-time').value,
+            color: document.getElementById('poop-color').value,
+            notes: document.getElementById('poop-notes').value
+        };
+        Store.addPoopRecord(record);
+        this.closeModal('poop-modal');
+        UI.renderRecentHistory();
+        UI.renderFullHistory('poop');
+    },
+
     saveHealthRecord() {
         this.closeModal('add-health-modal');
         UI.renderHealthSection(type === 'appointment' ? 'appointments' : 'vaccines');
