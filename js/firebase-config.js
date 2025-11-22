@@ -16,16 +16,25 @@ const firebaseConfig = {
 
 // Initialize Firebase only if valid config
 let db, auth;
-try {
-    if (firebaseConfig.apiKey && firebaseConfig.apiKey !== "YOUR_API_KEY") {
-        firebase.initializeApp(firebaseConfig);
-        window.db = firebase.firestore();
-        window.auth = firebase.auth();
-        console.log("Firebase initialized successfully. Auth:", !!window.auth, "DB:", !!window.db);
-    } else {
-        console.warn("Firebase not configured - using local storage only");
+
+if (typeof firebase === 'undefined') {
+    console.error("Firebase SDK not loaded. Check your internet connection or script tags.");
+    alert("Error: Firebase SDKs could not be loaded. Please check your internet connection.");
+} else {
+    try {
+        if (firebaseConfig.apiKey && firebaseConfig.apiKey !== "YOUR_API_KEY") {
+            if (!firebase.apps.length) {
+                firebase.initializeApp(firebaseConfig);
+            }
+            window.db = firebase.firestore();
+            window.auth = firebase.auth();
+            console.log("Firebase initialized successfully. Auth:", !!window.auth, "DB:", !!window.db);
+        } else {
+            console.warn("Firebase not configured - using local storage only");
+            alert("Warning: Firebase API Key is missing or invalid.");
+        }
+    } catch (error) {
+        console.error("Firebase initialization failed:", error);
+        alert("Firebase initialization failed: " + error.message);
     }
-} catch (error) {
-    console.error("Firebase initialization failed:", error);
-    console.warn("Falling back to local storage only");
 }
