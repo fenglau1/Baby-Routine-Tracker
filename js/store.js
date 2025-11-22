@@ -320,10 +320,22 @@ const Store = {
         });
     },
 
+    deleteBabyFromCloud(id) {
+        if (!db || !Auth.user) return;
+
+        db.collection('babies').doc(id).delete()
+            .then(() => console.log(`Baby ${id} deleted from cloud`))
+            .catch(err => console.error("Cloud delete failed", err));
+    },
+
     deleteBaby(id) {
         const index = this.state.babies.findIndex(b => b.id === id);
         if (index > -1) {
             this.state.babies.splice(index, 1);
+
+            // Delete from cloud
+            this.deleteBabyFromCloud(id);
+
             // If no babies left, do nothing (App will handle forced creation)
             if (this.state.babies.length > 0) {
                 // If we deleted the current baby, switch to the first one
