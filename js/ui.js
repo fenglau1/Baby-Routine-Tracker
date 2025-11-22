@@ -125,6 +125,13 @@ const UI = {
 
     renderFullHistory(tab = 'milk') {
         const baby = Store.getCurrentBaby();
+
+        if (!baby) {
+            const list = document.getElementById('history-list');
+            if (list) list.innerHTML = '<p style="text-align:center; color:var(--secondary-text); padding:20px;">No baby selected.</p>';
+            return;
+        }
+
         let records = [];
 
         if (tab === 'milk') records = baby.milkRecords.map(r => ({ ...r, type: 'milk' }));
@@ -151,6 +158,12 @@ const UI = {
     renderHealthSection(tab = 'appointments') {
         const baby = Store.getCurrentBaby();
         const list = document.getElementById('health-list');
+
+        if (!baby) {
+            if (list) list.innerHTML = '<p style="text-align:center; color:var(--secondary-text); padding:20px;">No baby selected.</p>';
+            return;
+        }
+
         list.innerHTML = '';
 
         let records = [];
@@ -237,6 +250,25 @@ const UI = {
             e.stopPropagation();
             if (confirm('Delete this record?')) {
                 Store.deleteRecord(type, index);
+                callback();
+                this.renderRecentHistory();
+            }
+        };
+        element.appendChild(deleteBtn);
+    },
+
+    addActionButtons(element, type, id, callback) {
+        // Add delete button
+        const deleteBtn = document.createElement('button');
+        deleteBtn.innerHTML = '<i class="fa-solid fa-trash"></i>';
+        deleteBtn.style.color = '#FF3B30';
+        deleteBtn.style.background = 'none';
+        deleteBtn.style.border = 'none';
+        deleteBtn.style.marginLeft = 'auto';
+        deleteBtn.onclick = (e) => {
+            e.stopPropagation();
+            if (confirm('Delete this record?')) {
+                Store.deleteRecord(type, id);
                 callback();
                 this.renderRecentHistory();
             }
