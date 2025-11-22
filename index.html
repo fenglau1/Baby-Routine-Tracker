@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Baby Routine</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <div id="sidebar-backdrop" class="sidebar-backdrop hidden" onclick="app.toggleSidebar()"></div>
+        <aside id="sidebar" class="sidebar hidden">
+            <div class="sidebar-header">
+                <h2>Menu</h2>
+                <button class="close-btn" onclick="app.toggleSidebar()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="sidebar-content">
+                <div id="auth-section" class="sidebar-section">
+                    <div id="user-info" class="hidden">
+                        <img id="user-avatar" src="" alt="User">
+                        <span id="user-name">User</span>
+                    </div>
+                    <button id="login-btn" class="sidebar-btn primary" onclick="Auth.login()">
+                        <i class="fa-brands fa-google"></i> Sign in with Google
+                    </button>
+                    <button id="logout-btn" class="sidebar-btn hidden" onclick="Auth.logout()">
+                        <i class="fa-solid fa-sign-out-alt"></i> Sign Out
+                    </button>
+                </div>
+                <div class="sidebar-divider"></div>
+                <nav class="sidebar-nav">
+                    <button class="sidebar-btn" onclick="app.openModal('settings-modal'); app.toggleSidebar()">
+                        <i class="fa-solid fa-gear"></i> Settings
+                    </button>
+                    <button class="sidebar-btn" onclick="app.openModal('charts-view'); app.toggleSidebar()">
+                        <i class="fa-solid fa-chart-pie"></i> Charts
+                    </button>
+                    <button class="sidebar-btn" onclick="app.openModal('history-view'); app.toggleSidebar()">
+                        <i class="fa-solid fa-clock-rotate-left"></i> History
+                    </button>
+                </nav>
+            </div>
+        </aside>
+
+        <!-- Header -->
+        <header class="glass-header">
+            <div class="header-top">
+                <button id="menu-btn" class="icon-btn" onclick="app.toggleSidebar()"><i
+                        class="fa-solid fa-bars"></i></button>
+                <h1>Baby Routine</h1>
+                <button id="add-baby-btn" class="icon-btn"><i class="fa-solid fa-plus"></i></button>
+            </div>
+
+            <!-- Baby Profile Card -->
+            <div id="baby-profile-card" class="baby-card hidden">
+                <div class="profile-image-container">
+                    <img id="profile-img" src="assets/default-baby.png" alt="Baby"
+                        onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2NjYyI+PHBhdGggZD0iTTEyIDEyYzIuMjEgMCA0LTEuNzkgNC00cy0xLjc5LTQtNC00LTQgMS43OS00IDQgMS43OSA0IDQgNHptMCAyYy0yLjY3IDAtOCAxLjM0LTggNHYyaDE2di0yYzAtMi42Ni01LjMzLTQtOC00eiIvPjwvc3ZnPg=='">
+                    <button id="edit-photo-btn" class="camera-btn"><i class="fa-solid fa-camera"></i></button>
+                    <input type="file" id="photo-upload" accept="image/*" hidden>
+                </div>
+                <h2 id="baby-name">Baby Name</h2>
+                <p id="baby-age" class="subtitle">0 months old</p>
+
+                <div class="stats-row">
+                    <div class="stat-item">
+                        <span class="stat-label">Weight</span>
+                        <span id="baby-weight" class="stat-value">-- kg</span>
+                    </div>
+                    <div class="divider"></div>
+                    <div class="stat-item">
+                        <span class="stat-label">Height</span>
+                        <span id="baby-height" class="stat-value">-- cm</span>
+                    </div>
+                </div>
+
+                <div class="action-row">
+                    <button id="update-stats-btn" class="sm-btn">Update</button>
+                    <button id="view-charts-btn" class="sm-btn secondary">Charts</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main id="main-content">
+            <!-- Quick Actions -->
+            <section class="quick-actions">
+                <button class="action-card milk" onclick="app.openModal('milk-modal')">
+                    <div class="icon-circle"><i class="fa-solid fa-bottle-water"></i></div>
+                    <span>Log Milk</span>
+                </button>
+                <button class="action-card food" onclick="app.openModal('food-modal')">
+                    <div class="icon-circle"><i class="fa-solid fa-utensils"></i></div>
+                    <span>Log Food</span>
+                </button>
+                <button class="action-card poop" onclick="app.openModal('poop-modal')">
+                    <div class="icon-circle"><i class="fa-solid fa-poo"></i></div>
+                    <span>Log Poop</span>
+                </button>
+            </section>
+
+            <!-- Recent History -->
+            <section class="history-section">
+                <div class="section-header">
+                    <h3>Recent Activity</h3>
+                    <button id="view-all-history-btn" class="link-btn">View All</button>
+                </div>
+                <div id="recent-list" class="record-list">
+                    <!-- Records will be injected here -->
+                </div>
+            </section>
+        </main>
+
+        <!-- Modals -->
+
+        <!-- Milk Modal -->
+        <div id="milk-modal" class="modal hidden">
+            <div class="modal-content bottom-sheet">
+                <div class="modal-header">
+                    <h3>Log Milk</h3>
+                    <button class="close-btn" onclick="app.closeModal('milk-modal')"><i
+                            class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Time</label>
+                        <input type="datetime-local" id="milk-time">
+                    </div>
+                    <div class="form-group">
+                        <label>Type</label>
+                        <div class="segmented-control">
+                            <button class="segment active" data-value="Formula"
+                                onclick="ui.selectSegment(this, 'milk-type')">Formula</button>
+                            <button class="segment" data-value="Breast Milk"
+                                onclick="ui.selectSegment(this, 'milk-type')">Breast Milk</button>
+                        </div>
+                        <input type="hidden" id="milk-type" value="Formula">
+                    </div>
+                    <div class="form-group">
+                        <label>Amount (<span id="unit-vol">ml</span>)</label>
+                        <div class="amount-control-container">
+                            <div class="amount-input-wrapper">
+                                <button class="adjust-btn minus" onclick="ui.adjustAmountDelta(-5)"><i
+                                        class="fa-solid fa-minus"></i></button>
+                                <input type="number" id="milk-amount" value="100">
+                                <button class="adjust-btn plus" onclick="ui.adjustAmountDelta(5)"><i
+                                        class="fa-solid fa-plus"></i></button>
+                            </div>
+                            <div class="quick-add-row">
+                                <button onclick="ui.adjustAmount(60)">60</button>
+                                <button onclick="ui.adjustAmount(90)">90</button>
+                                <button onclick="ui.adjustAmount(120)">120</button>
+                                <button onclick="ui.adjustAmount(150)">150</button>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="primary-btn" onclick="app.saveMilk()">Save Record</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Food Modal -->
+        <div id="food-modal" class="modal hidden">
+            <div class="modal-content bottom-sheet">
+                <div class="modal-header">
+                    <h3>Log Food</h3>
+                    <button class="close-btn" onclick="app.closeModal('food-modal')"><i
+                            class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Time</label>
+                        <input type="datetime-local" id="food-time">
+                    </div>
+                    <div class="form-group">
+                        <label>Meal Type</label>
+                        <div class="meal-type-row">
+                            <button class="meal-btn active" data-value="Breakfast" onclick="ui.selectMeal(this)">
+                                <span class="emoji">🥞</span>
+                                <span class="label">Breakfast</span>
+                            </button>
+                            <button class="meal-btn" data-value="Lunch" onclick="ui.selectMeal(this)">
+                                <span class="emoji">🍱</span>
+                                <span class="label">Lunch</span>
+                            </button>
+                            <button class="meal-btn" data-value="Dinner" onclick="ui.selectMeal(this)">
+                                <span class="emoji">🍲</span>
+                                <span class="label">Dinner</span>
+                            </button>
+                            <button class="meal-btn" data-value="Snack" onclick="ui.selectMeal(this)">
+                                <span class="emoji">🍪</span>
+                                <span class="label">Snack</span>
+                            </button>
+                        </div>
+                        <input type="hidden" id="food-meal-type" value="Breakfast">
+                    </div>
+                    <div class="form-group">
+                        <label>Food Item</label>
+                        <input type="text" id="food-item" placeholder="e.g. Mashed Potatoes">
+                    </div>
+                    <div class="form-group">
+                        <label>Mood</label>
+                        <div class="mood-row">
+                            <button class="mood-btn active" data-value="😊" onclick="ui.selectMood(this)">😊</button>
+                            <button class="mood-btn" data-value="😐" onclick="ui.selectMood(this)">😐</button>
+                            <button class="mood-btn" data-value="😫" onclick="ui.selectMood(this)">😫</button>
+                            <button class="mood-btn" data-value="😭" onclick="ui.selectMood(this)">😭</button>
+                            <button class="mood-btn" data-value="😋" onclick="ui.selectMood(this)">😋</button>
+                        </div>
+                        <input type="hidden" id="food-mood" value="😊">
+                    </div>
+                    <button class="primary-btn" onclick="app.saveFood()">Save Record</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Poop Modal -->
+        <div id="poop-modal" class="modal hidden">
+            <div class="modal-content bottom-sheet">
+                <div class="modal-header">
+                    <h3>Log Poop</h3>
+                    <button class="close-btn" onclick="app.closeModal('poop-modal')"><i
+                            class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Time</label>
+                        <input type="datetime-local" id="poop-time">
+                    </div>
+                    <div class="form-group">
+                        <label>Color</label>
+                        <div class="color-row">
+                            <button class="color-btn active" style="background-color: #FFD700;" data-value="Yellow"
+                                onclick="ui.selectColor(this)"></button>
+                            <button class="color-btn" style="background-color: #8B4513;" data-value="Brown"
+                                onclick="ui.selectColor(this)"></button>
+                            <button class="color-btn" style="background-color: #008000;" data-value="Green"
+                                onclick="ui.selectColor(this)"></button>
+                            <button class="color-btn" style="background-color: #000000;" data-value="Black"
+                                onclick="ui.selectColor(this)"></button>
+                            <button class="color-btn" style="background-color: #FF0000;" data-value="Red"
+                                onclick="ui.selectColor(this)"></button>
+                        </div>
+                        <p id="selected-color-name">Yellow</p>
+                        <input type="hidden" id="poop-color" value="Yellow">
+                    </div>
+                    <div class="form-group">
+                        <label>Notes</label>
+                        <textarea id="poop-notes" rows="3"></textarea>
+                    </div>
+                    <button class="primary-btn" onclick="app.savePoop()">Save Record</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings Modal -->
+        <div id="settings-modal" class="modal hidden">
+            <div class="modal-content fullscreen">
+                <div class="modal-header">
+                    <button class="back-btn" onclick="app.closeModal('settings-modal')"><i
+                            class="fa-solid fa-chevron-left"></i> Back</button>
+                    <h3>Settings</h3>
+                    <div style="width: 40px;"></div> <!-- Spacer -->
+                </div>
+                <div class="modal-body">
+                    <div class="settings-section">
+                        <h4>Appearance</h4>
+                        <div class="setting-item">
+                            <span>Dark Mode</span>
+                            <label class="switch">
+                                <input type="checkbox" id="dark-mode-toggle" onchange="app.toggleDarkMode()">
+                                <span class="slider round"></span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="settings-section">
+                        <h4>Units</h4>
+                        <div class="setting-item">
+                            <span>Use Metric System (kg/cm)</span>
+                            <label class="switch">
+                                <input type="checkbox" id="metric-toggle" checked onchange="app.toggleUnits()">
+                                <span class="slider round"></span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="settings-section">
+                        <h4>Data Management</h4>
+                        <button class="setting-btn" onclick="app.exportData()">
+                            <i class="fa-solid fa-file-export"></i> Export / Backup Data (JSON)
+                        </button>
+                        <button class="setting-btn" onclick="document.getElementById('import-file').click()">
+                            <i class="fa-solid fa-file-import"></i> Import Data (JSON)
+                        </button>
+                        <input type="file" id="import-file" accept=".json" hidden onchange="app.importData(this)">
+                        <button class="setting-btn destructive" onclick="app.deleteAllData()">
+                            <i class="fa-solid fa-trash"></i> Delete All Data
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- History View (Fullscreen Modal) -->
+        <div id="history-view" class="modal hidden">
+            <div class="modal-content fullscreen">
+                <div class="modal-header">
+                    <button class="back-btn" onclick="app.closeModal('history-view')"><i
+                            class="fa-solid fa-chevron-left"></i> Back</button>
+                    <h3>History</h3>
+                    <div style="width: 40px;"></div>
+                </div>
+                <div class="modal-body">
+                    <div class="tabs">
+                        <button class="tab active" onclick="ui.switchHistoryTab('milk')">Milk</button>
+                        <button class="tab" onclick="ui.switchHistoryTab('food')">Food</button>
+                        <button class="tab" onclick="ui.switchHistoryTab('poop')">Poop</button>
+                    </div>
+                    <div id="history-list" class="record-list">
+                        <!-- Full history injected here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts View (Fullscreen Modal) -->
+        <div id="charts-view" class="modal hidden">
+            <div class="modal-content fullscreen">
+                <div class="modal-header">
+                    <button class="back-btn" onclick="app.closeModal('charts-view')"><i
+                            class="fa-solid fa-chevron-left"></i> Back</button>
+                    <h3>Charts & Trends</h3>
+                    <div style="width: 40px;"></div>
+                </div>
+                <div class="modal-body">
+                    <div class="chart-card">
+                        <h4>Milk Intake (Last 7 Days)</h4>
+                        <canvas id="milkChart"></canvas>
+                    </div>
+                    <div class="chart-card">
+                        <h4>Meal Frequency</h4>
+                        <canvas id="foodChart"></canvas>
+                    </div>
+                    <div class="chart-card">
+                        <h4>Poop Colors</h4>
+                        <canvas id="poopChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+    <script src="js/firebase-config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/store.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/charts.js"></script>
+    <script src="js/app.js"></script>
+</body>
+
+</html>
