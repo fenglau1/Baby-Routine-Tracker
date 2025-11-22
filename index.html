@@ -314,6 +314,9 @@
                             <i class="fa-solid fa-file-import"></i> Import Data (JSON)
                         </button>
                         <input type="file" id="import-file" accept=".json" hidden onchange="app.importData(this)">
+                        <button class="setting-btn" onclick="app.shareAccess()">
+                            <i class="fa-solid fa-share-nodes"></i> Share Access
+                        </button>
                         <button class="setting-btn destructive" onclick="app.deleteAllData()">
                             <i class="fa-solid fa-trash"></i> Delete All Data
                         </button>

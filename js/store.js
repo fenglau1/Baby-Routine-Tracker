@@ -24,11 +24,11 @@ const Store = {
                 console.error("Failed to load data", e);
             }
         }
-        
+
         if (this.state.babies.length === 0) {
             this.createDefaultBaby();
         }
-        
+
         // Ensure currentBabyId is set
         if (!this.state.currentBabyId && this.state.babies.length > 0) {
             this.state.currentBabyId = this.state.babies[0].id;
@@ -206,6 +206,87 @@ const Store = {
         downloadAnchorNode.remove();
     },
 
+    // Sync Logic
+    async syncData() {
+        if (!Auth.user || !db) return;
+
+        const email = Auth.user.email;
+        const uid = Auth.user.uid;
+
+        try {
+            // 1. Get babies owned by user
+            const ownedQuery = await db.collection('babies').where('ownerId', '==', uid).get();
+
+            // 2. Get babies shared with user
+            const sharedQuery = await db.collection('babies').where('sharedWith', 'array-contains', email).get();
+
+            const remoteBabies = [];
+
+            ownedQuery.forEach(doc => remoteBabies.push(doc.data()));
+            sharedQuery.forEach(doc => remoteBabies.push(doc.data()));
+
+            if (remoteBabies.length > 0) {
+                // Merge logic: Remote wins for simplicity in this MVP
+                // In a real app, we'd merge arrays carefully.
+                // Here we just replace local babies with remote ones if they exist.
+
+                // We need to preserve local-only babies that haven't synced yet?
+                // For now, let's assume if you log in, you want the cloud state.
+
+                this.state.babies = remoteBabies;
+
+                // Ensure current baby is valid
+                if (!this.state.babies.find(b => b.id === this.state.currentBabyId)) {
+                    this.state.currentBabyId = this.state.babies[0].id;
+                }
+
+                this.hydrateDates();
+                this.save(false); // Save to local, don't sync back
+                console.log("Data synced from cloud");
+                UI.init(); // Re-render
+            } else {
+                // No remote data? Push local data if it's a new user or first sync
+                // But only if we have local data that isn't just the default empty one?
+                // Let's push all local babies to cloud
+                this.state.babies.forEach(baby => {
+                    if (!baby.ownerId) baby.ownerId = uid; // Claim ownership
+                    this.saveBabyToCloud(baby);
+                });
+            }
+        } catch (error) {
+            console.error("Sync failed:", error);
+        }
+    },
+
+    saveBabyToCloud(baby) {
+        if (!db || !Auth.user) return;
+
+        const cleanBaby = JSON.parse(JSON.stringify(baby)); // Clean dates to strings
+
+        db.collection('babies').doc(baby.id).set(cleanBaby)
+            .then(() => console.log(`Baby ${baby.name} saved to cloud`))
+            .catch(err => console.error("Cloud save failed", err));
+    },
+
+    async shareBaby(email) {
+        if (!db || !Auth.user) return;
+
+        const baby = this.getCurrentBaby();
+        if (baby.ownerId !== Auth.user.uid) {
+            alert("Only the owner can share this baby profile.");
+            return;
+        }
+
+        if (!baby.sharedWith) baby.sharedWith = [];
+        if (!baby.sharedWith.includes(email)) {
+            baby.sharedWith.push(email);
+            this.save(); // Will trigger cloud save
+            alert(`Shared ${baby.name} with ${email}`);
+        } else {
+            alert(`${email} already has access.`);
+        }
+    },
+
     async importJSON(file) {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
@@ -215,13 +296,13 @@ const Store = {
                     if (importedData.babies) {
                         this.state.babies = importedData.babies;
                         if (importedData.settings) this.state.settings = importedData.settings;
-                        
+
                         // Ensure IDs
                         this.state.babies.forEach(b => {
-                            if(!b.id) b.id = crypto.randomUUID();
-                            if(!b.measurements) b.measurements = [];
-                            if(!b.appointments) b.appointments = [];
-                            if(!b.vaccines) b.vaccines = [];
+                            if (!b.id) b.id = crypto.randomUUID();
+                            if (!b.measurements) b.measurements = [];
+                            if (!b.appointments) b.appointments = [];
+                            if (!b.vaccines) b.vaccines = [];
                         });
 
                         this.state.currentBabyId = this.state.babies[0].id;

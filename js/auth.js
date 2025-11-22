@@ -34,6 +34,8 @@ const Auth = {
         auth.signInWithPopup(provider)
             .then((result) => {
                 // User signed in
+                alert("Logged in as " + result.user.email);
+                Store.syncData();
             }).catch((error) => {
                 console.error("Login failed", error);
                 alert("Login failed: " + error.message);

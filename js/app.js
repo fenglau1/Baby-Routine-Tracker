@@ -106,6 +106,8 @@ const app = {
             Store.setCurrentBaby(val);
             UI.renderBabyProfile();
             UI.renderRecentHistory();
+            // Ensure switcher reflects change (if called programmatically)
+            document.getElementById('baby-switcher').value = val;
         }
     },
 
@@ -276,6 +278,13 @@ const app = {
         }).catch(err => {
             alert('Failed to import: ' + err);
         });
+    },
+
+    shareAccess() {
+        const email = prompt("Enter the Google email address to share this baby profile with:");
+        if (email) {
+            Store.shareBaby(email);
+        }
     },
 
     deleteAllData() {
