@@ -62,18 +62,25 @@ const Auth = {
         const userName = document.getElementById('user-name');
         const userEmail = document.getElementById('user-email');
         const userAvatar = document.getElementById('user-avatar');
+        const forceLoginModal = document.getElementById('force-login-modal');
 
         if (this.user) {
-            loginBtn.classList.add('hidden');
-            logoutBtn.classList.remove('hidden');
-            userInfo.classList.remove('hidden');
-            userName.textContent = this.user.displayName;
-            userEmail.textContent = this.user.email;
-            userAvatar.src = this.user.photoURL;
+            if (loginBtn) loginBtn.classList.add('hidden');
+            if (logoutBtn) logoutBtn.classList.remove('hidden');
+            if (userInfo) userInfo.classList.remove('hidden');
+            if (userName) userName.textContent = this.user.displayName;
+            if (userEmail) userEmail.textContent = this.user.email;
+            if (userAvatar) userAvatar.src = this.user.photoURL;
+
+            // Hide force login modal
+            if (forceLoginModal) forceLoginModal.classList.add('hidden');
         } else {
-            loginBtn.classList.remove('hidden');
-            logoutBtn.classList.add('hidden');
-            userInfo.classList.add('hidden');
+            if (loginBtn) loginBtn.classList.remove('hidden');
+            if (logoutBtn) logoutBtn.classList.add('hidden');
+            if (userInfo) userInfo.classList.add('hidden');
+
+            // Show force login modal
+            if (forceLoginModal) forceLoginModal.classList.remove('hidden');
         }
     }
 };
