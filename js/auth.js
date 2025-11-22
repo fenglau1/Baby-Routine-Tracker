@@ -36,16 +36,24 @@ const Auth = {
             if (user) {
                 console.log("User logged in:", user.email);
 
+                // Show loading overlay
+                const loadingOverlay = document.getElementById('loading-overlay');
+                if (loadingOverlay) loadingOverlay.classList.remove('hidden');
+
                 try {
                     console.log("Starting sync...");
                     // Add timeout to sync to prevent hanging
                     const syncPromise = Store.syncData();
-                    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Sync timeout")), 5000));
+                    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Sync timeout")), 8000));
 
                     await Promise.race([syncPromise, timeoutPromise]);
                     console.log("Sync complete.");
                 } catch (err) {
                     console.error("Sync error in Auth:", err);
+                    alert("Sync failed: " + err.message);
+                } finally {
+                    // Hide loading overlay
+                    if (loadingOverlay) loadingOverlay.classList.add('hidden');
                 }
 
                 // Force add baby if none exist after sync (or if sync failed and we have no local data)

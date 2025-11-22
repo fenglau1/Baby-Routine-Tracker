@@ -225,9 +225,22 @@ const Store = {
 
     // Sync Logic
     async syncData() {
-        if (!Auth.user || !window.db) {
-            console.warn("Sync aborted: User not logged in or DB not ready");
+        if (!Auth.user) {
+            console.warn("Sync aborted: User not logged in");
             return;
+        }
+
+        // Wait for DB to be ready
+        let retries = 0;
+        while (!window.db && retries < 10) {
+            console.log("Waiting for DB...");
+            await new Promise(resolve => setTimeout(resolve, 500));
+            retries++;
+        }
+
+        if (!window.db) {
+            console.error("Sync aborted: DB not ready after retries");
+            throw new Error("Database connection failed");
         }
 
         const email = Auth.user.email;
