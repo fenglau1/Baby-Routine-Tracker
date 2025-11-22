@@ -125,8 +125,8 @@
             <div class="modal-content bottom-sheet">
                 <div class="modal-header">
                     <h3>Switch Baby</h3>
-                    <button class="close-btn" onclick="app.closeModal('switch-baby-modal')"><i
-                            class="fa-solid fa-xmark"></i></button>
+                    <button id="switch-baby-close-btn" class="close-btn"
+                        onclick="app.closeModal('switch-baby-modal')"><i class="fa-solid fa-xmark"></i></button>
                 </div>
                 <div class="modal-body">
                     <div id="baby-list" class="baby-list-container">
@@ -551,6 +551,43 @@
                     <button class="destructive-btn"
                         style="margin-top: 10px; width: 100%; padding: 12px; border-radius: 12px; border: none; background: #FFEBEE; color: #D32F2F; font-weight: 600;"
                         onclick="app.deleteCurrentBaby()">Delete Profile</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Create Baby Modal -->
+        <div id="create-baby-modal" class="modal hidden" style="z-index: 1300;">
+            <div class="modal-content bottom-sheet">
+                <div class="modal-header">
+                    <h3>Add New Baby</h3>
+                    <button id="create-baby-close-btn" class="close-btn"
+                        onclick="app.closeModal('create-baby-modal')"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Baby's Name</label>
+                        <input type="text" id="create-name" placeholder="Enter name">
+                    </div>
+                    <div class="form-group">
+                        <label>Date of Birth</label>
+                        <input type="date" id="create-dob">
+                    </div>
+                    <div class="form-group">
+                        <label>Gender</label>
+                        <select id="create-gender">
+                            <option value="Boy">Boy</option>
+                            <option value="Girl">Girl</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Current Weight (kg)</label>
+                        <input type="number" id="create-weight" step="0.01" placeholder="3.5">
+                    </div>
+                    <div class="form-group">
+                        <label>Current Height (cm)</label>
+                        <input type="number" id="create-height" step="0.1" placeholder="50">
+                    </div>
+                    <button class="primary-btn" onclick="app.saveNewBaby()">Add Baby</button>
                 </div>
             </div>
         </div>

@@ -324,14 +324,14 @@ const Store = {
         const index = this.state.babies.findIndex(b => b.id === id);
         if (index > -1) {
             this.state.babies.splice(index, 1);
-            // If no babies left, create default
-            if (this.state.babies.length === 0) {
-                this.createDefaultBaby();
-            } else {
+            // If no babies left, do nothing (App will handle forced creation)
+            if (this.state.babies.length > 0) {
                 // If we deleted the current baby, switch to the first one
                 if (this.state.currentBabyId === id) {
                     this.state.currentBabyId = this.state.babies[0].id;
                 }
+            } else {
+                this.state.currentBabyId = null;
             }
             this.save();
         }

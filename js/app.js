@@ -30,9 +30,10 @@ const app = {
 
         // Check if we need to onboard a new user
         if (Store.state.babies.length === 0) {
-            this.openBabySwitcher();
-            // Optional: Hide the close button of the modal to force creation?
-            // For now, let's just open it.
+            this.addNewBaby();
+            // Force creation: Hide close button
+            document.getElementById('create-baby-close-btn').style.display = 'none';
+            document.querySelector('#create-baby-modal h3').textContent = 'Welcome! Add a Baby';
         }
     },
 
@@ -88,6 +89,12 @@ const app = {
     openBabySwitcher() {
         this.openModal('switch-baby-modal');
         UI.renderBabySwitcher();
+
+        // Ensure UI is correct (might have been changed by onboarding)
+        if (Store.state.babies.length > 0) {
+            document.getElementById('switch-baby-close-btn').style.display = 'block';
+            document.querySelector('#switch-baby-modal h3').textContent = 'Switch Baby';
+        }
     },
 
     selectBaby(id) {
@@ -98,17 +105,53 @@ const app = {
     },
 
     addNewBaby() {
-        const name = prompt("Enter baby's name:");
-        if (name) {
-            Store.createDefaultBaby();
-            const baby = Store.getCurrentBaby();
-            baby.name = name;
-            Store.save();
-            UI.renderBabyProfile();
-            UI.renderRecentHistory();
-            this.closeModal('switch-baby-modal');
-            alert(`Baby "${name}" added!`);
+        // Reset fields
+        document.getElementById('create-name').value = '';
+        document.getElementById('create-dob').value = new Date().toISOString().split('T')[0];
+        document.getElementById('create-gender').value = 'Boy';
+        document.getElementById('create-weight').value = '';
+        document.getElementById('create-height').value = '';
+
+        this.openModal('create-baby-modal');
+
+        // Ensure close button is visible for normal add
+        document.getElementById('create-baby-close-btn').style.display = 'block';
+        document.querySelector('#create-baby-modal h3').textContent = 'Add New Baby';
+    },
+
+    saveNewBaby() {
+        const name = document.getElementById('create-name').value;
+        if (!name) {
+            alert("Please enter a name.");
+            return;
         }
+
+        const newBaby = {
+            id: crypto.randomUUID(),
+            name: name,
+            dob: new Date(document.getElementById('create-dob').value),
+            gender: document.getElementById('create-gender').value,
+            currentWeight: parseFloat(document.getElementById('create-weight').value) || 3.5,
+            currentHeight: parseFloat(document.getElementById('create-height').value) || 50,
+            profileImage: null,
+            milkRecords: [],
+            foodRecords: [],
+            poopRecords: [],
+            vaccines: [],
+            appointments: [],
+            measurements: []
+        };
+
+        Store.state.babies.push(newBaby);
+        Store.setCurrentBaby(newBaby.id);
+
+        UI.renderBabyProfile();
+        UI.renderBabySwitcher();
+        this.closeModal('create-baby-modal');
+        this.closeModal('switch-baby-modal'); // Close switcher if open
+
+        // If we were in forced creation mode, we are safe now
+        document.getElementById('baby-profile-card').classList.remove('hidden');
     },
 
     handlePhotoUpload(file) {
@@ -147,8 +190,17 @@ const app = {
     deleteCurrentBaby() {
         if (confirm("Are you sure you want to delete this baby profile? This cannot be undone.")) {
             Store.deleteBaby(Store.state.currentBabyId);
-            UI.renderBabyProfile();
-            UI.renderBabySwitcher();
+
+            if (Store.state.babies.length === 0) {
+                // Force creation
+                this.addNewBaby();
+                document.getElementById('create-baby-close-btn').style.display = 'none';
+                document.querySelector('#create-baby-modal h3').textContent = 'Welcome! Add a Baby';
+                document.getElementById('baby-profile-card').classList.add('hidden');
+            } else {
+                UI.renderBabyProfile();
+                UI.renderBabySwitcher();
+            }
             this.closeModal('edit-profile-modal');
         }
     },
