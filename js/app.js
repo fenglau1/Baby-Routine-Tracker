@@ -350,5 +350,6 @@ const app = {
 
 // Start App
 document.addEventListener('DOMContentLoaded', () => {
+    window.app = app; // Ensure global access
     app.init();
 });
