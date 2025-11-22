@@ -47,8 +47,20 @@ const Store = {
     },
 
     hydrateDates() {
+        if (!this.state.babies) this.state.babies = [];
+
         this.state.babies.forEach(baby => {
-            baby.dob = new Date(baby.dob);
+            if (!baby.dob) baby.dob = new Date();
+            else baby.dob = new Date(baby.dob);
+
+            // Ensure arrays exist
+            if (!baby.milkRecords) baby.milkRecords = [];
+            if (!baby.foodRecords) baby.foodRecords = [];
+            if (!baby.poopRecords) baby.poopRecords = [];
+            if (!baby.measurements) baby.measurements = [];
+            if (!baby.appointments) baby.appointments = [];
+            if (!baby.vaccines) baby.vaccines = [];
+
             const ensureId = (r) => { if (!r.id) r.id = crypto.randomUUID(); };
 
             baby.milkRecords.forEach(r => { r.timestamp = new Date(r.timestamp); ensureId(r); });
@@ -236,10 +248,15 @@ const Store = {
 
                 // Ensure current baby is valid
                 if (!this.state.babies.find(b => b.id === this.state.currentBabyId)) {
-                    this.state.currentBabyId = this.state.babies[0].id;
+                    this.state.currentBabyId = this.state.babies[0]?.id || null;
                 }
 
-                this.hydrateDates();
+                try {
+                    this.hydrateDates();
+                } catch (err) {
+                    console.error("Hydration error:", err);
+                }
+
                 this.save(false); // Save to local, don't sync back
                 console.log("Data synced from cloud");
                 UI.init(); // Re-render
