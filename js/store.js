@@ -37,8 +37,13 @@ const Store = {
         this.applySettings();
     },
 
-    save() {
+    save(syncToCloud = true) {
         localStorage.setItem('babyRoutineData', JSON.stringify(this.state));
+
+        if (syncToCloud && Auth.user && this.state.currentBabyId) {
+            const baby = this.getCurrentBaby();
+            if (baby) this.saveBabyToCloud(baby);
+        }
     },
 
     hydrateDates() {
