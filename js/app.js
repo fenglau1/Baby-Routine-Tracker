@@ -28,13 +28,13 @@ const app = {
 
         // Photo Upload - handled via label and inline onchange
 
-        // Check if we need to onboard a new user
-        if (Store.state.babies.length === 0) {
-            this.addNewBaby();
-            // Force creation: Hide close button
-            document.getElementById('create-baby-close-btn').style.display = 'none';
-            document.querySelector('#create-baby-modal h3').textContent = 'Welcome! Add a Baby';
-        }
+        // Check if we need to onboard a new user is now handled in Auth.js after login/sync
+        // if (Store.state.babies.length === 0) {
+        //     this.addNewBaby();
+        //     // Force creation: Hide close button
+        //     document.getElementById('create-baby-close-btn').style.display = 'none';
+        //     document.querySelector('#create-baby-modal h3').textContent = 'Welcome! Add a Baby';
+        // }
     },
 
     checkNotifications() {

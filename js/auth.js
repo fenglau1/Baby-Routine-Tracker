@@ -17,13 +17,21 @@ const Auth = {
             this.updateUI();
             if (user) {
                 console.log("User logged in:", user.email);
-                await Store.syncData(); // Trigger sync on login
 
-                // Force add baby if none exist after sync
+                try {
+                    await Store.syncData(); // Trigger sync on login
+                } catch (err) {
+                    console.error("Sync error in Auth:", err);
+                }
+
+                // Force add baby if none exist after sync (or if sync failed and we have no local data)
                 if (Store.state.babies.length === 0) {
+                    console.log("No babies found, forcing creation.");
                     app.addNewBaby();
-                    document.getElementById('create-baby-close-btn').style.display = 'none';
-                    document.querySelector('#create-baby-modal h3').textContent = 'Welcome! Add a Baby';
+                    const closeBtn = document.getElementById('create-baby-close-btn');
+                    if (closeBtn) closeBtn.style.display = 'none';
+                    const title = document.querySelector('#create-baby-modal h3');
+                    if (title) title.textContent = 'Welcome! Add a Baby';
                 }
             } else {
                 console.log("User logged out");
