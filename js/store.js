@@ -75,6 +75,15 @@ const Store = {
         });
     },
 
+    getCurrentBaby() {
+        return this.state.babies.find(b => b.id === this.state.currentBabyId);
+    },
+
+    setCurrentBaby(id) {
+        this.state.currentBabyId = id;
+        this.save();
+    },
+
     // ... createDefaultBaby ...
 
     addBaby(baby) {
