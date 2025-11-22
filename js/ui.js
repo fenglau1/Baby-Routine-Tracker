@@ -8,6 +8,7 @@ const UI = {
         this.renderBabyProfile();
         this.renderRecentHistory();
         this.setupInputs();
+        this.renderBabySwitcher();
     },
 
     setupInputs() {
@@ -15,10 +16,31 @@ const UI = {
         const now = new Date();
         now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
         const timeString = now.toISOString().slice(0, 16);
+        const dateString = now.toISOString().slice(0, 10);
 
         document.getElementById('milk-time').value = timeString;
         document.getElementById('food-time').value = timeString;
         document.getElementById('poop-time').value = timeString;
+        document.getElementById('health-date').value = timeString;
+        document.getElementById('growth-date').value = dateString;
+    },
+
+    renderBabySwitcher() {
+        const switcher = document.getElementById('baby-switcher');
+        switcher.innerHTML = '';
+        Store.state.babies.forEach(baby => {
+            const option = document.createElement('option');
+            option.value = baby.id;
+            option.textContent = baby.name;
+            option.selected = baby.id === Store.state.currentBabyId;
+            switcher.appendChild(option);
+        });
+
+        // Add "New Baby" option
+        const addOption = document.createElement('option');
+        addOption.value = "new_baby_action";
+        addOption.textContent = "+ Add Baby";
+        switcher.appendChild(addOption);
     },
 
     renderBabyProfile() {
@@ -28,13 +50,15 @@ const UI = {
         document.getElementById('baby-name').textContent = baby.name;
         document.getElementById('baby-age').textContent = this.calculateAge(baby.dob);
 
+        // Pre-fill edit modal
+        document.getElementById('edit-name').value = baby.name;
+        document.getElementById('edit-dob').value = baby.dob.toISOString().split('T')[0];
+        document.getElementById('edit-gender').value = baby.gender || 'Boy';
+        document.getElementById('edit-weight').value = baby.currentWeight;
+        document.getElementById('edit-height').value = baby.currentHeight;
+
         if (baby.profileImage) {
-            // Handle base64 image if present (iOS export might be raw data, need to ensure compat)
-            // Assuming the store saves it as a base64 string or compatible URL
-            // If it's raw data from Swift, it might need conversion. 
-            // For web-to-web, base64 is fine.
-            // If importing from iOS, we might need to handle the Data type.
-            // For now, assume it works or falls back.
+            // Handle base64 image if present
         }
 
         const weight = settings.useMetricSystem ? `${baby.currentWeight} kg` : `${(baby.currentWeight * 2.20462).toFixed(2)} lb`;
@@ -97,29 +121,105 @@ const UI = {
 
         records.forEach((record, index) => {
             const el = this.createRecordElement(record);
-
-            // Add delete button for full history
-            const deleteBtn = document.createElement('button');
-            deleteBtn.innerHTML = '<i class="fa-solid fa-trash"></i>';
-            deleteBtn.style.color = '#FF3B30';
-            deleteBtn.style.background = 'none';
-            deleteBtn.style.border = 'none';
-            deleteBtn.style.marginLeft = 'auto';
-            deleteBtn.onclick = (e) => {
-                e.stopPropagation();
-                if (confirm('Delete this record?')) {
-                    Store.deleteRecord(tab, index); // Note: index might be off if sorted differently than store array. 
-                    // Ideally store should handle ID deletion. For simplicity using index but need to be careful.
-                    // In Store.js deleteRecord uses splice, so we need original index.
-                    // Better approach: Find record in store by timestamp/ID.
-                    // For this MVP, we'll just re-render.
-                    this.renderFullHistory(tab);
-                    this.renderRecentHistory();
-                }
-            };
-            el.appendChild(deleteBtn);
+            this.addDeleteButton(el, tab, index, () => this.renderFullHistory(tab));
             list.appendChild(el);
         });
+    },
+
+    renderHealthSection(tab = 'appointments') {
+        const baby = Store.getCurrentBaby();
+        const list = document.getElementById('health-list');
+        list.innerHTML = '';
+
+        let records = [];
+        if (tab === 'appointments') records = baby.appointments.map(r => ({ ...r, type: 'appointment' }));
+        if (tab === 'vaccines') records = baby.vaccines.map(r => ({ ...r, type: 'vaccine' }));
+
+        records.sort((a, b) => {
+            const dA = a.date || a.dateAdministered;
+            const dB = b.date || b.dateAdministered;
+            return dB - dA;
+        });
+
+        if (records.length === 0) {
+            list.innerHTML = '<p style="text-align:center; color:var(--secondary-text); padding:20px;">No records found.</p>';
+            return;
+        }
+
+        records.forEach((record, index) => {
+            const div = document.createElement('div');
+            div.className = 'record-item';
+
+            let icon, title, details, value;
+
+            if (tab === 'appointments') {
+                icon = '<i class="fa-solid fa-user-doctor" style="color:#E91E63"></i>';
+                title = record.title;
+                details = record.date.toLocaleString();
+                value = record.notes || '';
+            } else {
+                icon = '<i class="fa-solid fa-syringe" style="color:#9C27B0"></i>';
+                title = record.title;
+                details = record.dateAdministered.toLocaleDateString();
+                value = `Dose: ${record.dose}`;
+            }
+
+            div.innerHTML = `
+                <div class="record-icon">${icon}</div>
+                <div class="record-details">
+                    <div class="record-title">${title}</div>
+                    <div class="record-time">${details}</div>
+                </div>
+                <div class="record-value">${value}</div>
+            `;
+
+            this.addDeleteButton(div, tab === 'appointments' ? 'appointment' : 'vaccine', index, () => this.renderHealthSection(tab));
+            list.appendChild(div);
+        });
+    },
+
+    renderGrowthHistory() {
+        const baby = Store.getCurrentBaby();
+        const list = document.getElementById('growth-list');
+        list.innerHTML = '';
+
+        const records = [...baby.measurements].sort((a, b) => b.date - a.date);
+
+        records.forEach((record, index) => {
+            const div = document.createElement('div');
+            div.className = 'record-item';
+            div.innerHTML = `
+                <div class="record-icon"><i class="fa-solid fa-ruler-combined" style="color:#4CAF50"></i></div>
+                <div class="record-details">
+                    <div class="record-title">Measurement</div>
+                    <div class="record-time">${record.date.toLocaleDateString()}</div>
+                </div>
+                <div class="record-value">${record.weight}kg / ${record.height}cm</div>
+            `;
+            this.addDeleteButton(div, 'measurement', index, () => {
+                this.renderGrowthHistory();
+                Charts.renderGrowthCharts(); // Refresh charts
+            });
+            list.appendChild(div);
+        });
+    },
+
+    addDeleteButton(element, type, index, callback) {
+        const deleteBtn = document.createElement('button');
+        deleteBtn.innerHTML = '<i class="fa-solid fa-trash"></i>';
+        deleteBtn.style.color = '#FF3B30';
+        deleteBtn.style.background = 'none';
+        deleteBtn.style.border = 'none';
+        deleteBtn.style.marginLeft = 'auto';
+        deleteBtn.onclick = (e) => {
+            e.stopPropagation();
+            if (confirm('Delete this record?')) {
+                Store.deleteRecord(type, index);
+                callback();
+                this.renderRecentHistory();
+            }
+        };
+        element.appendChild(deleteBtn);
     },
 
     createRecordElement(record) {
@@ -134,28 +234,9 @@ const UI = {
         const time = record.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         const date = record.timestamp.toLocaleDateString();
 
-        if (record.type === 'milk') {
-            icon = '<i class="fa-solid fa-bottle-water" style="color:#2196F3"></i>';
-            title = record.type; // 'Formula' or 'Breast Milk' (field name collision in JS model vs Swift)
-            // In Store.js we saved it as ...record. The Swift DTO has 'type' as the milk type.
-            // But here we added 'type': 'milk' to the object.
-            // Let's check the DTO. Swift: type: MilkType.
-            // So record.type from Swift is "Formula".
-            // But we overwrote it in renderRecentHistory map.
-            // Let's fix that mapping in renderRecentHistory to not overwrite 'type' if possible, or use a different key.
-            // Actually, let's use record.milkType or similar if we can.
-            // Or just check properties.
-
-            // Correction: In renderRecentHistory, I did `type: 'milk'`. This overwrites the milk type (Formula).
-            // I should use `recordType: 'milk'` instead.
-        }
-
-        // Let's adjust the logic based on properties since 'type' might be ambiguous
         if (record.amountML !== undefined) { // Milk
             icon = '<i class="fa-solid fa-bottle-water" style="color:#2196F3"></i>';
-            title = record.type || "Milk"; // This might be "milk" from the map, or "Formula" from store
-            // If it's "milk" (from map), we lose the specific type.
-            // We need to fix the mapping in renderRecentHistory.
+            title = record.type || "Milk";
             value = `${record.amountML} ml`;
             details = `${date} • ${time}`;
         } else if (record.foodItem !== undefined) { // Food
@@ -238,6 +319,21 @@ const UI = {
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
         event.target.classList.add('active');
         this.renderFullHistory(tab);
+    },
+
+    switchHealthTab(tab) {
+        document.querySelectorAll('#health-modal .tab').forEach(t => t.classList.remove('active'));
+        event.target.classList.add('active');
+        this.renderHealthSection(tab);
+    },
+
+    toggleHealthInputs() {
+        const type = document.getElementById('health-type').value;
+        if (type === 'vaccine') {
+            document.getElementById('vaccine-dose-group').classList.remove('hidden');
+        } else {
+            document.getElementById('vaccine-dose-group').classList.add('hidden');
+        }
     }
 };
 

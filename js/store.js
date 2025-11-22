@@ -5,6 +5,7 @@
 
 const Store = {
     state: {
+        currentBabyId: null,
         babies: [],
         settings: {
             isDarkMode: false,
@@ -17,17 +18,22 @@ const Store = {
         if (savedData) {
             try {
                 const parsed = JSON.parse(savedData);
-                // Handle migration or structure updates if needed
                 this.state = parsed;
-                // Ensure dates are Date objects
                 this.hydrateDates();
             } catch (e) {
                 console.error("Failed to load data", e);
             }
-        } else {
-            // Create default baby if none exists
+        }
+        
+        if (this.state.babies.length === 0) {
             this.createDefaultBaby();
         }
+        
+        // Ensure currentBabyId is set
+        if (!this.state.currentBabyId && this.state.babies.length > 0) {
+            this.state.currentBabyId = this.state.babies[0].id;
+        }
+
         this.applySettings();
     },
 
@@ -66,11 +72,18 @@ const Store = {
             measurements: []
         };
         this.state.babies.push(newBaby);
+        this.state.currentBabyId = newBaby.id;
         this.save();
+        return newBaby;
     },
 
     getCurrentBaby() {
-        return this.state.babies[0]; // For now, single baby support
+        return this.state.babies.find(b => b.id === this.state.currentBabyId) || this.state.babies[0];
+    },
+
+    setCurrentBaby(id) {
+        this.state.currentBabyId = id;
+        this.save();
     },
 
     updateBaby(updates) {
@@ -106,12 +119,55 @@ const Store = {
         this.save();
     },
 
+    addHealthRecord(type, record) {
+        const baby = this.getCurrentBaby();
+        if (type === 'appointment') {
+            baby.appointments.push({
+                ...record,
+                date: new Date(record.date)
+            });
+        } else if (type === 'vaccine') {
+            baby.vaccines.push({
+                ...record,
+                dateAdministered: new Date(record.dateAdministered)
+            });
+        }
+        this.save();
+    },
+
+    addMeasurement(record) {
+        const baby = this.getCurrentBaby();
+        baby.measurements.push({
+            ...record,
+            date: new Date(record.date)
+        });
+        // Update current stats
+        baby.currentWeight = record.weight;
+        baby.currentHeight = record.height;
+        this.save();
+    },
+
     deleteRecord(type, index) {
         const baby = this.getCurrentBaby();
         if (type === 'milk') baby.milkRecords.splice(index, 1);
         if (type === 'food') baby.foodRecords.splice(index, 1);
         if (type === 'poop') baby.poopRecords.splice(index, 1);
+        if (type === 'appointment') baby.appointments.splice(index, 1);
+        if (type === 'vaccine') baby.vaccines.splice(index, 1);
+        if (type === 'measurement') baby.measurements.splice(index, 1);
         this.save();
+    },
+
+    getUpcomingAppointments(days = 7) {
+        const baby = this.getCurrentBaby();
+        const now = new Date();
+        const future = new Date();
+        future.setDate(now.getDate() + days);
+
+        return baby.appointments.filter(appt => {
+            const d = new Date(appt.date);
+            return d >= now && d <= future;
+        });
     },
 
     toggleDarkMode() {
@@ -135,11 +191,11 @@ const Store = {
 
     // Export/Import Logic
     exportJSON() {
-        // Format matches the iOS app's structure
         const exportData = {
-            version: "1.0",
+            version: "1.1",
             timestamp: new Date(),
-            babies: this.state.babies
+            babies: this.state.babies,
+            settings: this.state.settings
         };
         const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportData, null, 2));
         const downloadAnchorNode = document.createElement('a');
@@ -156,18 +212,19 @@ const Store = {
             reader.onload = (event) => {
                 try {
                     const importedData = JSON.parse(event.target.result);
-
-                    // Merge logic (Simplistic: Add new babies or replace if ID matches)
                     if (importedData.babies) {
-                        importedData.babies.forEach(importedBaby => {
-                            const existingIndex = this.state.babies.findIndex(b => b.id === importedBaby.id);
-                            if (existingIndex >= 0) {
-                                // Replace/Merge logic could go here. For now, replace.
-                                this.state.babies[existingIndex] = importedBaby;
-                            } else {
-                                this.state.babies.push(importedBaby);
-                            }
+                        this.state.babies = importedData.babies;
+                        if (importedData.settings) this.state.settings = importedData.settings;
+                        
+                        // Ensure IDs
+                        this.state.babies.forEach(b => {
+                            if(!b.id) b.id = crypto.randomUUID();
+                            if(!b.measurements) b.measurements = [];
+                            if(!b.appointments) b.appointments = [];
+                            if(!b.vaccines) b.vaccines = [];
                         });
+
+                        this.state.currentBabyId = this.state.babies[0].id;
                         this.hydrateDates();
                         this.save();
                         resolve(true);
@@ -186,63 +243,5 @@ const Store = {
         this.state.babies = [];
         this.createDefaultBaby();
         this.save();
-    },
-
-    // Sync Logic
-    async syncData() {
-        if (!Auth.user || !db) return;
-
-        const userRef = db.collection('users').doc(Auth.user.uid);
-
-        try {
-            const doc = await userRef.get();
-            if (doc.exists) {
-                // Pull remote data
-                const remoteData = doc.data();
-                // Simple merge: Remote wins if newer, or just overwrite local for now to ensure sync
-                // For a robust sync, we'd need timestamps on modification.
-                // Let's assume remote is truth for now if it exists.
-                if (remoteData.babies) {
-                    this.state.babies = remoteData.babies;
-                    this.hydrateDates();
-                    this.save(false); // Save to local but don't sync back immediately to avoid loop
-                    console.log("Data synced from cloud");
-                    UI.init(); // Re-render
-                }
-            } else {
-                // No remote data, push local
-                this.save();
-            }
-        } catch (error) {
-            console.error("Sync failed:", error);
-        }
-    },
-
-    save(syncToCloud = true) {
-        localStorage.setItem('babyRoutineData', JSON.stringify(this.state));
-
-        if (syncToCloud && Auth.user && db) {
-            // Push to Firestore
-            // We convert dates to ISO strings or Timestamps? 
-            // JSON.stringify handles dates as ISO strings.
-            // Firestore can handle objects.
-            // Let's store the whole state object.
-            // But Firestore doesn't like custom objects or undefined.
-            // Simplest: Store as JSON string or sanitize.
-            // Let's store 'babies' array.
-
-            // Deep copy to avoid modifying state during save (if we needed to convert dates)
-            // But JSON.parse(JSON.stringify()) is a quick way to get a clean object with ISO date strings.
-            const cleanState = JSON.parse(JSON.stringify(this.state));
-
-            db.collection('users').doc(Auth.user.uid).set({
-                babies: cleanState.babies,
-                lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
-            }).then(() => {
-                console.log("Data saved to cloud");
-            }).catch(err => {
-                console.error("Cloud save failed", err);
-            });
-        }
     }
 };

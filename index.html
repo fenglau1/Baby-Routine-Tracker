@@ -8,6 +8,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 
 <body>
@@ -52,7 +54,12 @@
             <div class="header-top">
                 <button id="menu-btn" class="icon-btn" onclick="app.toggleSidebar()"><i
                         class="fa-solid fa-bars"></i></button>
-                <h1>Baby Routine</h1>
+                <div class="header-title-group">
+                    <h1>Baby Routine</h1>
+                    <select id="baby-switcher" class="baby-select" onchange="app.switchBaby(this.value)">
+                        <!-- Options injected by JS -->
+                    </select>
+                </div>
                 <button id="add-baby-btn" class="icon-btn"><i class="fa-solid fa-plus"></i></button>
             </div>
 
@@ -80,8 +87,12 @@
                 </div>
 
                 <div class="action-row">
-                    <button id="update-stats-btn" class="sm-btn">Update</button>
-                    <button id="view-charts-btn" class="sm-btn secondary">Charts</button>
+                    <button id="update-stats-btn" class="sm-btn" onclick="app.openModal('edit-profile-modal')">Edit
+                        Profile</button>
+                    <button id="view-growth-btn" class="sm-btn secondary"
+                        onclick="app.openModal('growth-modal')">Growth</button>
+                    <button id="view-health-btn" class="sm-btn secondary"
+                        onclick="app.openModal('health-modal')">Health</button>
                 </div>
             </div>
         </header>
@@ -290,8 +301,14 @@
                     </div>
                     <div class="settings-section">
                         <h4>Data Management</h4>
-                        <button class="setting-btn" onclick="app.exportData()">
-                            <i class="fa-solid fa-file-export"></i> Export / Backup Data (JSON)
+                        <button class="setting-btn" onclick="app.exportData('json')">
+                            <i class="fa-solid fa-file-code"></i> Export Backup (JSON)
+                        </button>
+                        <button class="setting-btn" onclick="app.exportData('excel')">
+                            <i class="fa-solid fa-file-excel"></i> Export to Excel
+                        </button>
+                        <button class="setting-btn" onclick="app.exportData('pdf')">
+                            <i class="fa-solid fa-file-pdf"></i> Export to PDF
                         </button>
                         <button class="setting-btn" onclick="document.getElementById('import-file').click()">
                             <i class="fa-solid fa-file-import"></i> Import Data (JSON)
@@ -348,7 +365,104 @@
                     <div class="chart-card">
                         <h4>Poop Colors</h4>
                         <canvas id="poopChart"></canvas>
+                        <button class="tab active" onclick="ui.switchHealthTab('appointments')">Appointments</button>
+                        <button class="tab" onclick="ui.switchHealthTab('vaccines')">Vaccines</button>
                     </div>
+                    <div id="health-list" class="record-list">
+                        <!-- Injected via JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Health Record Modal -->
+        <div id="add-health-modal" class="modal hidden" style="z-index: 1100;">
+            <div class="modal-content bottom-sheet">
+                <div class="modal-header">
+                    <h3>Add Health Record</h3>
+                    <button class="close-btn" onclick="app.closeModal('add-health-modal')"><i
+                            class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Type</label>
+                        <select id="health-type" onchange="ui.toggleHealthInputs()">
+                            <option value="appointment">Appointment</option>
+                            <option value="vaccine">Vaccine</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Title / Vaccine Name</label>
+                        <input type="text" id="health-title" placeholder="e.g. Pediatrician Visit">
+                    </div>
+                    <div class="form-group">
+                        <label>Date & Time</label>
+                        <input type="datetime-local" id="health-date">
+                    </div>
+                    <div class="form-group" id="vaccine-dose-group" class="hidden">
+                        <label>Dose Number</label>
+                        <input type="number" id="vaccine-dose" value="1">
+                    </div>
+                    <div class="form-group">
+                        <label>Notes / Location</label>
+                        <input type="text" id="health-notes">
+                    </div>
+                    <button class="primary-btn" onclick="app.saveHealthRecord()">Save</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Growth Modal -->
+        <div id="growth-modal" class="modal hidden">
+            <div class="modal-content fullscreen">
+                <div class="modal-header">
+                    <button class="back-btn" onclick="app.closeModal('growth-modal')"><i
+                            class="fa-solid fa-chevron-left"></i> Back</button>
+                    <h3>Growth Tracker</h3>
+                    <button class="icon-btn" onclick="app.openModal('add-growth-modal')"><i
+                            class="fa-solid fa-plus"></i></button>
+                </div>
+                <div class="modal-body">
+                    <div class="chart-card">
+                        <h4>Weight History</h4>
+                        <canvas id="weightChart"></canvas>
+                    </div>
+                    <div class="chart-card">
+                        <h4>Height History</h4>
+                        <canvas id="heightChart"></canvas>
+                    </div>
+                    <div class="section-header">
+                        <h3>History</h3>
+                    </div>
+                    <div id="growth-list" class="record-list">
+                        <!-- Injected via JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Growth Modal -->
+        <div id="add-growth-modal" class="modal hidden" style="z-index: 1100;">
+            <div class="modal-content bottom-sheet">
+                <div class="modal-header">
+                    <h3>Log Measurement</h3>
+                    <button class="close-btn" onclick="app.closeModal('add-growth-modal')"><i
+                            class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Date</label>
+                        <input type="date" id="growth-date">
+                    </div>
+                    <div class="form-group">
+                        <label>Weight (kg)</label>
+                        <input type="number" id="growth-weight" step="0.01">
+                    </div>
+                    <div class="form-group">
+                        <label>Height (cm)</label>
+                        <input type="number" id="growth-height" step="0.1">
+                    </div>
+                    <button class="primary-btn" onclick="app.saveGrowthRecord()">Save</button>
                 </div>
             </div>
         </div>

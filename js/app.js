@@ -7,7 +7,8 @@ const app = {
     init() {
         Store.init();
         UI.init();
-        Auth.init(); // Initialize Auth
+        Auth.init();
+        this.checkNotifications();
 
         // Event Listeners
         document.getElementById('view-all-history-btn').onclick = () => {
@@ -20,7 +21,6 @@ const app = {
             Charts.render();
         };
 
-        // Add Baby button
         document.getElementById('add-baby-btn').onclick = () => {
             const name = prompt("Enter baby's name:");
             if (name) {
@@ -29,12 +29,33 @@ const app = {
                 baby.name = name;
                 Store.save();
                 UI.renderBabyProfile();
+                UI.renderBabySwitcher();
                 alert(`Baby "${name}" added!`);
             }
         };
+    },
 
-        // Menu button is now handled inline in HTML or we can add listener here if we removed onclick
-        // document.getElementById('menu-btn').onclick = () => { this.toggleSidebar(); };
+    checkNotifications() {
+        if (!("Notification" in window)) return;
+
+        if (Notification.permission !== "granted") {
+            Notification.requestPermission();
+        }
+
+        const upcoming = Store.getUpcomingAppointments(7);
+        if (upcoming.length > 0) {
+            // Simple alert for MVP, or proper notification
+            if (Notification.permission === "granted") {
+                upcoming.forEach(appt => {
+                    new Notification(`Upcoming Appointment: ${appt.title}`, {
+                        body: `${new Date(appt.date).toLocaleString()} - ${appt.notes || ''}`
+                    });
+                });
+            } else {
+                // Fallback in-app alert
+                // alert(`You have ${upcoming.length} upcoming appointments!`);
+            }
+        }
     },
 
     toggleSidebar() {
@@ -52,11 +73,40 @@ const app = {
 
     openModal(id) {
         document.getElementById(id).classList.remove('hidden');
-        UI.setupInputs(); // Reset times
+        UI.setupInputs();
+
+        // Specific init logic for modals
+        if (id === 'health-modal') UI.renderHealthSection();
+        if (id === 'growth-modal') {
+            UI.renderGrowthHistory();
+            setTimeout(() => Charts.renderGrowthCharts(), 100); // Delay for canvas render
+        }
     },
 
     closeModal(id) {
         document.getElementById(id).classList.add('hidden');
+    },
+
+    switchBaby(val) {
+        if (val === 'new_baby_action') {
+            const name = prompt("Enter baby's name:");
+            if (name) {
+                Store.createDefaultBaby();
+                const baby = Store.getCurrentBaby();
+                baby.name = name;
+                Store.save();
+                UI.renderBabyProfile();
+                UI.renderBabySwitcher();
+                UI.renderRecentHistory();
+            } else {
+                // Reset select to current baby
+                UI.renderBabySwitcher();
+            }
+        } else {
+            Store.setCurrentBaby(val);
+            UI.renderBabyProfile();
+            UI.renderRecentHistory();
+        }
     },
 
     // Actions
@@ -64,7 +114,7 @@ const app = {
         const record = {
             timestamp: document.getElementById('milk-time').value,
             amountML: parseFloat(document.getElementById('milk-amount').value),
-            type: document.getElementById('milk-type').value // 'Formula' or 'Breast Milk'
+            type: document.getElementById('milk-type').value
         };
         Store.addMilkRecord(record);
         this.closeModal('milk-modal');
@@ -95,10 +145,56 @@ const app = {
         UI.renderRecentHistory();
     },
 
+    saveProfileUpdates() {
+        const updates = {
+            name: document.getElementById('edit-name').value,
+            dob: new Date(document.getElementById('edit-dob').value),
+            gender: document.getElementById('edit-gender').value,
+            currentWeight: parseFloat(document.getElementById('edit-weight').value),
+            currentHeight: parseFloat(document.getElementById('edit-height').value)
+        };
+        Store.updateBaby(updates);
+        UI.renderBabyProfile();
+        UI.renderBabySwitcher(); // Update name in switcher
+        this.closeModal('edit-profile-modal');
+    },
+
+    saveHealthRecord() {
+        const type = document.getElementById('health-type').value;
+        const record = {
+            title: document.getElementById('health-title').value,
+            notes: document.getElementById('health-notes').value
+        };
+
+        if (type === 'appointment') {
+            record.date = document.getElementById('health-date').value;
+        } else {
+            record.dateAdministered = document.getElementById('health-date').value;
+            record.dose = document.getElementById('vaccine-dose').value;
+        }
+
+        Store.addHealthRecord(type, record);
+        this.closeModal('add-health-modal');
+        UI.renderHealthSection(type === 'appointment' ? 'appointments' : 'vaccines');
+    },
+
+    saveGrowthRecord() {
+        const record = {
+            date: document.getElementById('growth-date').value,
+            weight: parseFloat(document.getElementById('growth-weight').value),
+            height: parseFloat(document.getElementById('growth-height').value)
+        };
+        Store.addMeasurement(record);
+        this.closeModal('add-growth-modal');
+        UI.renderGrowthHistory();
+        Charts.renderGrowthCharts();
+        UI.renderBabyProfile(); // Update current stats card
+    },
+
     // Settings
     toggleDarkMode() {
         Store.toggleDarkMode();
-        UI.renderBabyProfile(); // Re-renders to update UI state if needed
+        UI.renderBabyProfile();
     },
 
     toggleUnits() {
@@ -106,8 +202,67 @@ const app = {
         UI.renderBabyProfile();
     },
 
-    exportData() {
-        Store.exportJSON();
+    exportData(type) {
+        if (type === 'json') {
+            Store.exportJSON();
+        } else if (type === 'excel') {
+            this.exportToExcel();
+        } else if (type === 'pdf') {
+            this.exportToPDF();
+        }
+    },
+
+    exportToExcel() {
+        const baby = Store.getCurrentBaby();
+        const wb = XLSX.utils.book_new();
+
+        // Milk Sheet
+        const milkData = baby.milkRecords.map(r => ({
+            Date: new Date(r.timestamp).toLocaleString(),
+            Type: r.type,
+            Amount: r.amountML + ' ml'
+        }));
+        const wsMilk = XLSX.utils.json_to_sheet(milkData);
+        XLSX.utils.book_append_sheet(wb, wsMilk, "Milk");
+
+        // Food Sheet
+        const foodData = baby.foodRecords.map(r => ({
+            Date: new Date(r.timestamp).toLocaleString(),
+            Meal: r.mealType,
+            Item: r.foodItem,
+            Mood: r.mood
+        }));
+        const wsFood = XLSX.utils.json_to_sheet(foodData);
+        XLSX.utils.book_append_sheet(wb, wsFood, "Food");
+
+        XLSX.writeFile(wb, `${baby.name}_Records.xlsx`);
+    },
+
+    exportToPDF() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        const baby = Store.getCurrentBaby();
+
+        doc.setFontSize(20);
+        doc.text(`Report for ${baby.name}`, 10, 10);
+
+        doc.setFontSize(12);
+        doc.text(`DOB: ${new Date(baby.dob).toLocaleDateString()}`, 10, 20);
+        doc.text(`Current Weight: ${baby.currentWeight} kg`, 10, 30);
+
+        let y = 50;
+        doc.setFontSize(16);
+        doc.text("Recent Milk Records", 10, y);
+        y += 10;
+        doc.setFontSize(10);
+
+        baby.milkRecords.slice(0, 20).forEach(r => {
+            doc.text(`${new Date(r.timestamp).toLocaleString()} - ${r.type} - ${r.amountML}ml`, 10, y);
+            y += 7;
+            if (y > 280) { doc.addPage(); y = 10; }
+        });
+
+        doc.save(`${baby.name}_Report.pdf`);
     },
 
     importData(input) {

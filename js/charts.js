@@ -7,6 +7,8 @@ const Charts = {
     milkChart: null,
     foodChart: null,
     poopChart: null,
+    weightChart: null,
+    heightChart: null,
 
     render() {
         this.renderMilkChart();
@@ -119,6 +121,53 @@ const Charts = {
                     legend: { position: 'right' }
                 }
             }
+        });
+    },
+
+    renderGrowthCharts() {
+        const baby = Store.getCurrentBaby();
+        const records = [...baby.measurements].sort((a, b) => a.date - b.date);
+
+        const labels = records.map(r => r.date.toLocaleDateString());
+        const weights = records.map(r => r.weight);
+        const heights = records.map(r => r.height);
+
+        // Weight Chart
+        const ctxW = document.getElementById('weightChart').getContext('2d');
+        if (this.weightChart) this.weightChart.destroy();
+
+        this.weightChart = new Chart(ctxW, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Weight (kg)',
+                    data: weights,
+                    borderColor: '#4CAF50',
+                    tension: 0.1,
+                    fill: false
+                }]
+            },
+            options: { responsive: true }
+        });
+
+        // Height Chart
+        const ctxH = document.getElementById('heightChart').getContext('2d');
+        if (this.heightChart) this.heightChart.destroy();
+
+        this.heightChart = new Chart(ctxH, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Height (cm)',
+                    data: heights,
+                    borderColor: '#2196F3',
+                    tension: 0.1,
+                    fill: false
+                }]
+            },
+            options: { responsive: true }
         });
     }
 };
