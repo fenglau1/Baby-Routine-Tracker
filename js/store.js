@@ -320,6 +320,23 @@ const Store = {
         });
     },
 
+    deleteBaby(id) {
+        const index = this.state.babies.findIndex(b => b.id === id);
+        if (index > -1) {
+            this.state.babies.splice(index, 1);
+            // If no babies left, create default
+            if (this.state.babies.length === 0) {
+                this.createDefaultBaby();
+            } else {
+                // If we deleted the current baby, switch to the first one
+                if (this.state.currentBabyId === id) {
+                    this.state.currentBabyId = this.state.babies[0].id;
+                }
+            }
+            this.save();
+        }
+    },
+
     deleteAllData() {
         this.state.babies = [];
         this.createDefaultBaby();

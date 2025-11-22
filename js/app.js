@@ -116,18 +116,37 @@ const app = {
             return;
         }
 
+        // Validate file size (max 2MB to avoid localStorage quota issues)
+        if (file.size > 2 * 1024 * 1024) {
+            alert("Image is too large. Please choose an image under 2MB.");
+            return;
+        }
+
         const reader = new FileReader();
         reader.onload = (e) => {
-            const base64 = e.target.result;
-            Store.updateBaby({ profileImage: base64 });
-            UI.renderBabyProfile();
-            // Also update the header if we want the photo there in the future
+            try {
+                const base64 = e.target.result;
+                Store.updateBaby({ profileImage: base64 });
+                UI.renderBabyProfile();
+            } catch (err) {
+                console.error("Storage failed", err);
+                alert("Failed to save image. It might be too large for local storage.");
+            }
         };
         reader.onerror = (err) => {
             console.error("Error reading file:", err);
             alert("Failed to read file.");
         };
         reader.readAsDataURL(file);
+    },
+
+    deleteCurrentBaby() {
+        if (confirm("Are you sure you want to delete this baby profile? This cannot be undone.")) {
+            Store.deleteBaby(Store.state.currentBabyId);
+            UI.renderBabyProfile();
+            UI.renderBabySwitcher();
+            this.closeModal('edit-profile-modal');
+        }
     },
 
     saveMilk() {
