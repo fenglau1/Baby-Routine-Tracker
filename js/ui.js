@@ -65,8 +65,11 @@ const UI = {
         document.getElementById('edit-weight').value = baby.currentWeight;
         document.getElementById('edit-height').value = baby.currentHeight;
 
+        const profileImg = document.getElementById('profile-img');
         if (baby.profileImage) {
-            // Handle base64 image if present
+            profileImg.src = baby.profileImage;
+        } else {
+            profileImg.src = 'assets/default-baby.png';
         }
 
         const weight = settings.useMetricSystem ? `${baby.currentWeight} kg` : `${(baby.currentWeight * 2.20462).toFixed(2)} lb`;
@@ -346,5 +349,5 @@ const UI = {
 };
 
 // Alias for HTML onclick handlers
-const ui = UI;
+window.ui = UI;
 

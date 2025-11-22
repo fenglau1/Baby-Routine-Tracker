@@ -11,6 +11,7 @@ const app = {
         this.checkNotifications();
 
         // Event Listeners
+        // Event Listeners
         document.getElementById('view-all-history-btn').onclick = () => {
             this.openModal('history-view');
             UI.renderFullHistory('milk');
@@ -18,39 +19,37 @@ const app = {
 
         document.getElementById('view-charts-btn').onclick = () => {
             this.openModal('charts-view');
-            Charts.render();
+            setTimeout(() => Charts.render(), 100); // Delay for canvas to be visible
         };
 
-        // document.getElementById('add-baby-btn').onclick = ... (Removed, handled by openBabySwitcher)
+        // Photo Upload
+        document.getElementById('edit-photo-btn').onclick = () => {
+            document.getElementById('photo-upload').click();
+        };
+
+        document.getElementById('photo-upload').onchange = (e) => {
+            this.handlePhotoUpload(e.target.files[0]);
+        };
     },
 
     checkNotifications() {
         if (!("Notification" in window)) return;
-
         if (Notification.permission !== "granted") {
             Notification.requestPermission();
         }
-
         const upcoming = Store.getUpcomingAppointments(7);
-        if (upcoming.length > 0) {
-            // Simple alert for MVP, or proper notification
-            if (Notification.permission === "granted") {
-                upcoming.forEach(appt => {
-                    new Notification(`Upcoming Appointment: ${appt.title}`, {
-                        body: `${new Date(appt.date).toLocaleString()} - ${appt.notes || ''}`
-                    });
+        if (upcoming.length > 0 && Notification.permission === "granted") {
+            upcoming.forEach(appt => {
+                new Notification(`Upcoming Appointment: ${appt.title}`, {
+                    body: `${new Date(appt.date).toLocaleString()} - ${appt.notes || ''}`
                 });
-            } else {
-                // Fallback in-app alert
-                // alert(`You have ${upcoming.length} upcoming appointments!`);
-            }
+            });
         }
     },
 
     toggleSidebar() {
         const sidebar = document.getElementById('sidebar');
         const backdrop = document.getElementById('sidebar-backdrop');
-
         if (sidebar.classList.contains('hidden')) {
             sidebar.classList.remove('hidden');
             backdrop.classList.remove('hidden');
@@ -64,11 +63,17 @@ const app = {
         document.getElementById(id).classList.remove('hidden');
         UI.setupInputs();
 
-        // Specific init logic for modals
-        if (id === 'health-modal') UI.renderHealthSection();
+        if (id === 'health-view') {
+            UI.renderHealthSection();
+        }
+
+        if (id === 'charts-view') {
+            setTimeout(() => Charts.render(), 300);
+        }
+
         if (id === 'growth-modal') {
             UI.renderGrowthHistory();
-            setTimeout(() => Charts.renderGrowthCharts(), 100); // Delay for canvas render
+            setTimeout(() => Charts.renderGrowthCharts(), 300);
         }
     },
 
@@ -102,7 +107,29 @@ const app = {
         }
     },
 
-    // Actions
+    handlePhotoUpload(file) {
+        if (!file) return;
+
+        // Validate file type
+        if (!file.type.startsWith('image/')) {
+            alert("Please select an image file.");
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const base64 = e.target.result;
+            Store.updateBaby({ profileImage: base64 });
+            UI.renderBabyProfile();
+            // Also update the header if we want the photo there in the future
+        };
+        reader.onerror = (err) => {
+            console.error("Error reading file:", err);
+            alert("Failed to read file.");
+        };
+        reader.readAsDataURL(file);
+    },
+
     saveMilk() {
         const record = {
             timestamp: document.getElementById('milk-time').value,
@@ -148,27 +175,42 @@ const app = {
         };
         Store.updateBaby(updates);
         UI.renderBabyProfile();
-        UI.renderBabySwitcher(); // Update name in switcher
+        UI.renderBabySwitcher();
         this.closeModal('edit-profile-modal');
     },
 
     saveHealthRecord() {
         const type = document.getElementById('health-type').value;
+        const title = document.getElementById('health-title').value;
+        const dateVal = document.getElementById('health-date').value;
+
+        if (!title || !dateVal) {
+            alert("Please fill in all required fields.");
+            return;
+        }
+
         const record = {
-            title: document.getElementById('health-title').value,
+            title: title,
             notes: document.getElementById('health-notes').value
         };
 
         if (type === 'appointment') {
-            record.date = document.getElementById('health-date').value;
+            record.date = dateVal;
         } else {
-            record.dateAdministered = document.getElementById('health-date').value;
+            record.dateAdministered = dateVal;
             record.dose = document.getElementById('vaccine-dose').value;
         }
 
         Store.addHealthRecord(type, record);
         this.closeModal('add-health-modal');
         UI.renderHealthSection(type === 'appointment' ? 'appointments' : 'vaccines');
+
+        // Refresh charts view if open, or just the list
+        const healthList = document.getElementById('health-list');
+        if (healthList) {
+            // If we are in the charts view, refresh the list
+            // But wait, renderHealthSection does that.
+        }
     },
 
     saveGrowthRecord() {
