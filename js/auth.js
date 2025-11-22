@@ -7,19 +7,24 @@ const Auth = {
     user: null,
 
     init() {
-        if (!auth) {
-            console.warn("Auth not initialized - Firebase not configured");
+        console.log("Auth.init() called");
+        if (typeof auth === 'undefined' || !auth) {
+            console.error("Auth not initialized - Firebase not configured or script missing");
+            alert("Critical Error: Firebase Auth not loaded. Please check console.");
             return;
         }
 
         auth.onAuthStateChanged(async user => {
+            console.log("AuthStateChanged:", user ? user.email : "No user");
             this.user = user;
             this.updateUI();
             if (user) {
                 console.log("User logged in:", user.email);
 
                 try {
+                    console.log("Starting sync...");
                     await Store.syncData(); // Trigger sync on login
+                    console.log("Sync complete.");
                 } catch (err) {
                     console.error("Sync error in Auth:", err);
                 }
@@ -35,6 +40,8 @@ const Auth = {
                 }
             } else {
                 console.log("User logged out");
+                // Ensure UI is updated even if logged out
+                this.updateUI();
             }
         });
     },

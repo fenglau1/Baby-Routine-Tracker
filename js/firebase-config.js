@@ -19,9 +19,9 @@ let db, auth;
 try {
     if (firebaseConfig.apiKey && firebaseConfig.apiKey !== "YOUR_API_KEY") {
         firebase.initializeApp(firebaseConfig);
-        db = firebase.firestore();
-        auth = firebase.auth();
-        console.log("Firebase initialized successfully");
+        window.db = firebase.firestore();
+        window.auth = firebase.auth();
+        console.log("Firebase initialized successfully. Auth:", !!window.auth, "DB:", !!window.db);
     } else {
         console.warn("Firebase not configured - using local storage only");
     }
