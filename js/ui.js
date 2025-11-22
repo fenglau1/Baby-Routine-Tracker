@@ -30,19 +30,20 @@ const UI = {
         list.innerHTML = '';
 
         Store.state.babies.forEach(baby => {
-            const btn = document.createElement('button');
-            btn.className = `baby-list-item ${baby.id === Store.state.currentBabyId ? 'active' : ''}`;
+            const btn = document.createElement('div');
+            btn.className = `baby-card-item ${baby.id === Store.state.currentBabyId ? 'active' : ''}`;
             btn.onclick = () => app.selectBaby(baby.id);
 
-            // Checkmark
-            const check = baby.id === Store.state.currentBabyId ? '<i class="fa-solid fa-check"></i>' : '';
+            const img = baby.profileImage || 'assets/default-baby.png';
+            const age = this.calculateAge(new Date(baby.dob));
 
             btn.innerHTML = `
+                <img src="${img}" class="baby-avatar-sm" alt="${baby.name}">
                 <div class="baby-info">
                     <span class="baby-name">${baby.name}</span>
-                    <span class="baby-age">${this.calculateAge(new Date(baby.dob))}</span>
+                    <span class="baby-age">${age}</span>
                 </div>
-                ${check}
+                ${baby.id === Store.state.currentBabyId ? '<i class="fa-solid fa-circle-check active-icon"></i>' : '<i class="fa-regular fa-circle"></i>'}
             `;
             list.appendChild(btn);
         });
@@ -51,6 +52,11 @@ const UI = {
     renderBabyProfile() {
         const baby = Store.getCurrentBaby();
         const settings = Store.state.settings;
+
+        if (!baby) {
+            document.getElementById('baby-profile-card').classList.add('hidden');
+            return;
+        }
 
         // Update Header Button
         document.getElementById('current-baby-name-display').textContent = baby.name;
@@ -98,6 +104,10 @@ const UI = {
 
     renderRecentHistory() {
         const baby = Store.getCurrentBaby();
+        if (!baby) {
+            document.getElementById('recent-list').innerHTML = '';
+            return;
+        }
         const allRecords = [
             ...baby.milkRecords.map(r => ({ ...r, type: 'milk', sortTime: r.timestamp })),
             ...baby.foodRecords.map(r => ({ ...r, type: 'food', sortTime: r.timestamp })),
@@ -327,13 +337,13 @@ const UI = {
     },
 
     switchHistoryTab(tab) {
-        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('#history-view .tab').forEach(t => t.classList.remove('active'));
         event.target.classList.add('active');
         this.renderFullHistory(tab);
     },
 
     switchHealthTab(tab) {
-        document.querySelectorAll('#health-modal .tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('#health-view .tab').forEach(t => t.classList.remove('active'));
         event.target.classList.add('active');
         this.renderHealthSection(tab);
     },

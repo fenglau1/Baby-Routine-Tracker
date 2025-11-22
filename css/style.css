@@ -846,3 +846,68 @@ input:checked+.slider:before {
 .quick-add-row {
     justify-content: center;
 }
+/* Enhanced Baby Switcher */
+.baby-list-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.baby-card-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px;
+    background: var(--card-background);
+    border: 2px solid transparent;
+    border-radius: 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: var(--shadow);
+}
+
+.baby-card-item:hover {
+    transform: translateY(-2px);
+}
+
+.baby-card-item.active {
+    border-color: var(--primary-color);
+    background: rgba(0, 122, 255, 0.05);
+}
+
+.baby-avatar-sm {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid white;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.baby-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.baby-name {
+    font-weight: 600;
+    font-size: 16px;
+    color: var(--text-color);
+}
+
+.baby-age {
+    font-size: 12px;
+    color: var(--secondary-text);
+}
+
+.active-icon {
+    color: var(--primary-color);
+    font-size: 20px;
+}
+
+.fa-circle {
+    color: var(--border-color);
+    font-size: 20px;
+}

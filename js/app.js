@@ -22,14 +22,18 @@ const app = {
             setTimeout(() => Charts.render(), 100); // Delay for canvas to be visible
         };
 
-        // Photo Upload
-        document.getElementById('edit-photo-btn').onclick = () => {
-            document.getElementById('photo-upload').click();
-        };
-
         document.getElementById('photo-upload').onchange = (e) => {
             this.handlePhotoUpload(e.target.files[0]);
         };
+
+        // Photo Upload - handled via label and inline onchange
+
+        // Check if we need to onboard a new user
+        if (Store.state.babies.length === 0) {
+            this.openBabySwitcher();
+            // Optional: Hide the close button of the modal to force creation?
+            // For now, let's just open it.
+        }
     },
 
     checkNotifications() {

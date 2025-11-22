@@ -25,9 +25,9 @@ const Store = {
             }
         }
 
-        if (this.state.babies.length === 0) {
-            this.createDefaultBaby();
-        }
+        // if (this.state.babies.length === 0) {
+        //     this.createDefaultBaby();
+        // }
 
         // Ensure currentBabyId is set
         if (!this.state.currentBabyId && this.state.babies.length > 0) {
