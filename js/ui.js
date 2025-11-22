@@ -26,26 +26,34 @@ const UI = {
     },
 
     renderBabySwitcher() {
-        const switcher = document.getElementById('baby-switcher');
-        switcher.innerHTML = '';
-        Store.state.babies.forEach(baby => {
-            const option = document.createElement('option');
-            option.value = baby.id;
-            option.textContent = baby.name;
-            option.selected = baby.id === Store.state.currentBabyId;
-            switcher.appendChild(option);
-        });
+        const list = document.getElementById('baby-list');
+        list.innerHTML = '';
 
-        // Add "New Baby" option
-        const addOption = document.createElement('option');
-        addOption.value = "new_baby_action";
-        addOption.textContent = "+ Add Baby";
-        switcher.appendChild(addOption);
+        Store.state.babies.forEach(baby => {
+            const btn = document.createElement('button');
+            btn.className = `baby-list-item ${baby.id === Store.state.currentBabyId ? 'active' : ''}`;
+            btn.onclick = () => app.selectBaby(baby.id);
+
+            // Checkmark
+            const check = baby.id === Store.state.currentBabyId ? '<i class="fa-solid fa-check"></i>' : '';
+
+            btn.innerHTML = `
+                <div class="baby-info">
+                    <span class="baby-name">${baby.name}</span>
+                    <span class="baby-age">${this.calculateAge(new Date(baby.dob))}</span>
+                </div>
+                ${check}
+            `;
+            list.appendChild(btn);
+        });
     },
 
     renderBabyProfile() {
         const baby = Store.getCurrentBaby();
         const settings = Store.state.settings;
+
+        // Update Header Button
+        document.getElementById('current-baby-name-display').textContent = baby.name;
 
         document.getElementById('baby-name').textContent = baby.name;
         document.getElementById('baby-age').textContent = this.calculateAge(baby.dob);

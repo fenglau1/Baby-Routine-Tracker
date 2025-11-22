@@ -60,6 +60,7 @@ const Auth = {
         const logoutBtn = document.getElementById('logout-btn');
         const userInfo = document.getElementById('user-info');
         const userName = document.getElementById('user-name');
+        const userEmail = document.getElementById('user-email');
         const userAvatar = document.getElementById('user-avatar');
 
         if (this.user) {
@@ -67,6 +68,7 @@ const Auth = {
             logoutBtn.classList.remove('hidden');
             userInfo.classList.remove('hidden');
             userName.textContent = this.user.displayName;
+            userEmail.textContent = this.user.email;
             userAvatar.src = this.user.photoURL;
         } else {
             loginBtn.classList.remove('hidden');

@@ -22,19 +22,6 @@
                 <button class="close-btn" onclick="app.toggleSidebar()"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <div class="sidebar-content">
-                <div id="auth-section" class="sidebar-section">
-                    <div id="user-info" class="hidden">
-                        <img id="user-avatar" src="" alt="User">
-                        <span id="user-name">User</span>
-                    </div>
-                    <button id="login-btn" class="sidebar-btn primary" onclick="Auth.login()">
-                        <i class="fa-brands fa-google"></i> Sign in with Google
-                    </button>
-                    <button id="logout-btn" class="sidebar-btn hidden" onclick="Auth.logout()">
-                        <i class="fa-solid fa-sign-out-alt"></i> Sign Out
-                    </button>
-                </div>
-                <div class="sidebar-divider"></div>
                 <nav class="sidebar-nav">
                     <button class="sidebar-btn" onclick="app.openModal('settings-modal'); app.toggleSidebar()">
                         <i class="fa-solid fa-gear"></i> Settings
@@ -56,11 +43,12 @@
                         class="fa-solid fa-bars"></i></button>
                 <div class="header-title-group">
                     <h1>Baby Routine</h1>
-                    <select id="baby-switcher" class="baby-select" onchange="app.switchBaby(this.value)">
-                        <!-- Options injected by JS -->
-                    </select>
+                    <button id="baby-switcher-btn" class="baby-select-btn" onclick="app.openBabySwitcher()">
+                        <span id="current-baby-name-display">My Baby</span> <i class="fa-solid fa-chevron-down"></i>
+                    </button>
                 </div>
-                <button id="add-baby-btn" class="icon-btn"><i class="fa-solid fa-plus"></i></button>
+                <button id="add-baby-header-btn" class="icon-btn" onclick="app.openBabySwitcher()"><i
+                        class="fa-solid fa-users"></i></button>
             </div>
 
             <!-- Baby Profile Card -->
@@ -128,6 +116,25 @@
         </main>
 
         <!-- Modals -->
+
+        <!-- Switch Baby Modal -->
+        <div id="switch-baby-modal" class="modal hidden" style="z-index: 1200;">
+            <div class="modal-content bottom-sheet">
+                <div class="modal-header">
+                    <h3>Switch Baby</h3>
+                    <button class="close-btn" onclick="app.closeModal('switch-baby-modal')"><i
+                            class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div class="modal-body">
+                    <div id="baby-list" class="baby-list-container">
+                        <!-- Injected via JS -->
+                    </div>
+                    <button class="primary-btn" onclick="app.addNewBaby()">
+                        <i class="fa-solid fa-plus"></i> Add New Baby
+                    </button>
+                </div>
+            </div>
+        </div>
 
         <!-- Milk Modal -->
         <div id="milk-modal" class="modal hidden">
@@ -279,6 +286,24 @@
                     <div style="width: 40px;"></div> <!-- Spacer -->
                 </div>
                 <div class="modal-body">
+                    <!-- Auth Section Moved Here -->
+                    <div id="auth-section" class="settings-section">
+                        <h4>Account</h4>
+                        <div id="user-info" class="user-profile-row hidden">
+                            <img id="user-avatar" src="" alt="User">
+                            <div class="user-details">
+                                <span id="user-name">User</span>
+                                <span id="user-email" class="subtitle"></span>
+                            </div>
+                        </div>
+                        <button id="login-btn" class="setting-btn primary" onclick="Auth.login()">
+                            <i class="fa-brands fa-google"></i> Sign in with Google
+                        </button>
+                        <button id="logout-btn" class="setting-btn destructive hidden" onclick="Auth.logout()">
+                            <i class="fa-solid fa-sign-out-alt"></i> Sign Out
+                        </button>
+                    </div>
+
                     <div class="settings-section">
                         <h4>Appearance</h4>
                         <div class="setting-item">

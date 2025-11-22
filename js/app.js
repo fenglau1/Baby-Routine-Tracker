@@ -21,18 +21,7 @@ const app = {
             Charts.render();
         };
 
-        document.getElementById('add-baby-btn').onclick = () => {
-            const name = prompt("Enter baby's name:");
-            if (name) {
-                Store.createDefaultBaby();
-                const baby = Store.getCurrentBaby();
-                baby.name = name;
-                Store.save();
-                UI.renderBabyProfile();
-                UI.renderBabySwitcher();
-                alert(`Baby "${name}" added!`);
-            }
-        };
+        // document.getElementById('add-baby-btn').onclick = ... (Removed, handled by openBabySwitcher)
     },
 
     checkNotifications() {
@@ -87,27 +76,29 @@ const app = {
         document.getElementById(id).classList.add('hidden');
     },
 
-    switchBaby(val) {
-        if (val === 'new_baby_action') {
-            const name = prompt("Enter baby's name:");
-            if (name) {
-                Store.createDefaultBaby();
-                const baby = Store.getCurrentBaby();
-                baby.name = name;
-                Store.save();
-                UI.renderBabyProfile();
-                UI.renderBabySwitcher();
-                UI.renderRecentHistory();
-            } else {
-                // Reset select to current baby
-                UI.renderBabySwitcher();
-            }
-        } else {
-            Store.setCurrentBaby(val);
+    openBabySwitcher() {
+        this.openModal('switch-baby-modal');
+        UI.renderBabySwitcher();
+    },
+
+    selectBaby(id) {
+        Store.setCurrentBaby(id);
+        UI.renderBabyProfile();
+        UI.renderRecentHistory();
+        this.closeModal('switch-baby-modal');
+    },
+
+    addNewBaby() {
+        const name = prompt("Enter baby's name:");
+        if (name) {
+            Store.createDefaultBaby();
+            const baby = Store.getCurrentBaby();
+            baby.name = name;
+            Store.save();
             UI.renderBabyProfile();
             UI.renderRecentHistory();
-            // Ensure switcher reflects change (if called programmatically)
-            document.getElementById('baby-switcher').value = val;
+            this.closeModal('switch-baby-modal');
+            alert(`Baby "${name}" added!`);
         }
     },
 
