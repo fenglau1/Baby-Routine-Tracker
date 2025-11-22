@@ -142,8 +142,7 @@ const app = {
             measurements: []
         };
 
-        Store.state.babies.push(newBaby);
-        Store.setCurrentBaby(newBaby.id);
+        Store.addBaby(newBaby);
 
         UI.renderBabyProfile();
         UI.renderBabySwitcher();

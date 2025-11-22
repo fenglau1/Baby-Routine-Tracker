@@ -77,6 +77,12 @@ const Store = {
 
     // ... createDefaultBaby ...
 
+    addBaby(baby) {
+        this.state.babies.push(baby);
+        this.setCurrentBaby(baby.id);
+        this.save(); // Triggers cloud save
+    },
+
     addMilkRecord(record) {
         const baby = this.getCurrentBaby();
         baby.milkRecords.push({
