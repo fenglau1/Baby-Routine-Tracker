@@ -101,8 +101,13 @@
                     <span>Log Food</span>
                 </button>
                 <button class="action-card poop" onclick="app.openModal('poop-modal')">
-                    <div class="icon-circle"><i class="fa-solid fa-poo"></i></div>
-                    <span>Log Poop</span>
+                    <div class="icon-circle poop"><i class="fa-solid fa-poo"></i></div>
+                    <span>Poop</span>
+                </button>
+                <button class="action-card health" onclick="app.openModal('health-view')">
+                    <div class="icon-circle health" style="background: #E1BEE7; color: #9C27B0;"><i
+                            class="fa-solid fa-heart-pulse"></i></div>
+                    <span>Health</span>
                 </button>
             </section>
 
@@ -409,17 +414,59 @@
                     <button class="back-btn" onclick="app.closeModal('health-view')"><i
                             class="fa-solid fa-chevron-left"></i> Back</button>
                     <h3>Health & Vaccines</h3>
-                    <button class="icon-btn" onclick="app.openModal('add-health-modal')"><i
-                            class="fa-solid fa-plus"></i></button>
+                    <div class="health-grid">
+                        <button class="health-btn"
+                            onclick="app.openModal('add-health-modal'); document.getElementById('health-type').value='appointment'">
+                            <i class="fa-solid fa-user-doctor" style="color:#E91E63"></i>
+                            <span>Doctor Visit</span>
+                        </button>
+                        <button class="health-btn"
+                            onclick="app.openModal('add-health-modal'); document.getElementById('health-type').value='vaccine'">
+                            <i class="fa-solid fa-syringe" style="color:#9C27B0"></i>
+                            <span>Vaccine</span>
+                        </button>
+                        <button class="health-btn" onclick="app.openModal('temperature-modal')">
+                            <i class="fa-solid fa-temperature-three-quarters" style="color:#FF5722"></i>
+                            <span>Temperature</span>
+                        </button>
+                    </div>
                 </div>
                 <div class="modal-body">
                     <div class="tabs">
-                        <button class="tab active" onclick="ui.switchHealthTab('appointments')">Appointments</button>
-                        <button class="tab" onclick="ui.switchHealthTab('vaccines')">Vaccines</button>
+                        <button class="tab-btn active" onclick="ui.switchHealthTab(this, 'appointments')">Doctor
+                            Visits</button>
+                        <button class="tab-btn" onclick="ui.switchHealthTab(this, 'vaccines')">Vaccines</button>
+                        <button class="tab-btn" onclick="ui.switchHealthTab(this, 'temperature')">Temperature</button>
                     </div>
                     <div id="health-list" class="record-list">
-                        <!-- Injected via JS -->
+                        <!-- Health records injected here -->
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Temperature Modal -->
+        <div id="temperature-modal" class="modal hidden">
+            <div class="modal-content bottom-sheet">
+                <div class="modal-header">
+                    <h3>Log Temperature</h3>
+                    <button class="close-btn" onclick="app.closeModal('temperature-modal')"><i
+                            class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Time</label>
+                        <input type="datetime-local" id="temp-time">
+                    </div>
+                    <div class="form-group">
+                        <label>Temperature (°C)</label>
+                        <input type="number" id="temp-value" step="0.1" placeholder="36.5">
+                    </div>
+                    <div class="form-group">
+                        <label>Notes</label>
+                        <textarea id="temp-notes" rows="3" placeholder="Optional notes..."></textarea>
+                    </div>
+                    <button class="primary-btn" onclick="app.saveTemperatureRecord()">Save Record</button>
                 </div>
             </div>
         </div>

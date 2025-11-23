@@ -169,11 +169,12 @@ const UI = {
         let records = [];
         if (tab === 'appointments') records = baby.appointments.map(r => ({ ...r, type: 'appointment' }));
         if (tab === 'vaccines') records = baby.vaccines.map(r => ({ ...r, type: 'vaccine' }));
+        if (tab === 'temperature') records = (baby.temperatureRecords || []).map(r => ({ ...r, type: 'temperature' }));
 
         records.sort((a, b) => {
-            const dA = a.date || a.dateAdministered;
-            const dB = b.date || b.dateAdministered;
-            return dB - dA;
+            const dA = a.date || a.dateAdministered || a.timestamp;
+            const dB = b.date || b.dateAdministered || b.timestamp;
+            return new Date(dB) - new Date(dA);
         });
 
         if (records.length === 0) {
@@ -190,13 +191,18 @@ const UI = {
             if (tab === 'appointments') {
                 icon = '<i class="fa-solid fa-user-doctor" style="color:#E91E63"></i>';
                 title = record.title;
-                details = record.date.toLocaleString();
+                details = new Date(record.date).toLocaleString();
                 value = record.notes || '';
-            } else {
+            } else if (tab === 'vaccines') {
                 icon = '<i class="fa-solid fa-syringe" style="color:#9C27B0"></i>';
                 title = record.title;
-                details = record.dateAdministered.toLocaleDateString();
+                details = new Date(record.dateAdministered).toLocaleDateString();
                 value = `Dose: ${record.dose}`;
+            } else if (tab === 'temperature') {
+                icon = '<i class="fa-solid fa-temperature-three-quarters" style="color:#FF5722"></i>';
+                title = 'Temperature';
+                details = new Date(record.timestamp).toLocaleString();
+                value = `${record.temperature}°C`;
             }
 
             div.innerHTML = `
@@ -208,7 +214,7 @@ const UI = {
                 <div class="record-value">${value}</div>
             `;
 
-            this.addActionButtons(div, tab === 'appointments' ? 'appointment' : 'vaccine', record.id, () => this.renderHealthSection(tab));
+            this.addActionButtons(div, record.type, record.id, () => this.renderHealthSection(tab));
             list.appendChild(div);
         });
     },

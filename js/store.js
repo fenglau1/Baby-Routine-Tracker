@@ -14,31 +14,23 @@ const Store = {
     },
 
     init() {
-        const savedData = localStorage.getItem('babyRoutineData');
-        if (savedData) {
-            try {
-                const parsed = JSON.parse(savedData);
-                this.state = parsed;
-                this.hydrateDates();
-            } catch (e) {
-                console.error("Failed to load data", e);
+        // Local Storage removed as per request - relying on Cloud Sync
+        this.state = {
+            currentBabyId: null,
+            babies: [],
+            settings: {
+                isDarkMode: false,
+                useMetricSystem: true
             }
-        }
+        };
 
-        // if (this.state.babies.length === 0) {
-        //     this.createDefaultBaby();
-        // }
-
-        // Ensure currentBabyId is set
-        if (!this.state.currentBabyId && this.state.babies.length > 0) {
-            this.state.currentBabyId = this.state.babies[0].id;
-        }
-
+        // Ensure we have a clean state
         this.applySettings();
     },
 
     save(syncToCloud = true) {
-        localStorage.setItem('babyRoutineData', JSON.stringify(this.state));
+        // Local Storage removed as per request
+        // localStorage.setItem('babyRoutineData', JSON.stringify(this.state));
 
         if (syncToCloud && Auth.user && this.state.currentBabyId) {
             const baby = this.getCurrentBaby();
@@ -60,6 +52,7 @@ const Store = {
             if (!baby.measurements) baby.measurements = [];
             if (!baby.appointments) baby.appointments = [];
             if (!baby.vaccines) baby.vaccines = [];
+            if (!baby.temperatureRecords) baby.temperatureRecords = [];
 
             const ensureId = (r) => { if (!r.id) r.id = crypto.randomUUID(); };
 
@@ -72,6 +65,7 @@ const Store = {
                 if (r.dateAdministered) r.dateAdministered = new Date(r.dateAdministered);
                 ensureId(r);
             });
+            baby.temperatureRecords.forEach(r => { r.timestamp = new Date(r.timestamp); ensureId(r); });
         });
     },
 
@@ -87,6 +81,9 @@ const Store = {
     // ... createDefaultBaby ...
 
     addBaby(baby) {
+        if (Auth.user) {
+            baby.ownerId = Auth.user.uid;
+        }
         this.state.babies.push(baby);
         this.setCurrentBaby(baby.id);
         this.save(); // Triggers cloud save
@@ -139,6 +136,18 @@ const Store = {
         this.save();
     },
 
+    addTemperatureRecord(record) {
+        const baby = this.getCurrentBaby();
+        if (!baby.temperatureRecords) baby.temperatureRecords = [];
+
+        baby.temperatureRecords.push({
+            id: crypto.randomUUID(),
+            ...record,
+            timestamp: new Date(record.timestamp)
+        });
+        this.save();
+    },
+
     addMeasurement(record) {
         const baby = this.getCurrentBaby();
         baby.measurements.push({
@@ -165,6 +174,7 @@ const Store = {
         if (type === 'appointment') findAndRemove(baby.appointments);
         if (type === 'vaccine') findAndRemove(baby.vaccines);
         if (type === 'measurement') findAndRemove(baby.measurements);
+        if (type === 'temperature') findAndRemove(baby.temperatureRecords);
         this.save();
     },
 

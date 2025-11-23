@@ -256,23 +256,57 @@ const app = {
     },
 
     saveHealthRecord() {
+        const type = document.getElementById('health-type').value;
+        const record = {
+            title: document.getElementById('health-title').value,
+            notes: document.getElementById('health-notes').value
+        };
+
+        if (type === 'appointment') {
+            record.date = document.getElementById('health-date').value || new Date().toISOString();
+        } else {
+            record.dateAdministered = document.getElementById('health-date').value || new Date().toISOString();
+            record.dose = document.getElementById('health-dose').value;
+        }
+
+        Store.addHealthRecord(type, record);
         this.closeModal('add-health-modal');
         UI.renderHealthSection(type === 'appointment' ? 'appointments' : 'vaccines');
+    },
 
-        // Refresh charts view if open, or just the list
-        const healthList = document.getElementById('health-list');
-        if (healthList) {
-            // If we are in the charts view, refresh the list
-            // But wait, renderHealthSection does that.
+    saveTemperatureRecord() {
+        const temp = parseFloat(document.getElementById('temp-value').value);
+        if (!temp) {
+            alert('Please enter a temperature');
+            return;
         }
+
+        const record = {
+            temperature: temp,
+            timestamp: document.getElementById('temp-time').value || new Date().toISOString(),
+            notes: document.getElementById('temp-notes').value
+        };
+
+        Store.addTemperatureRecord(record);
+        this.closeModal('temperature-modal');
+        // We'll need to update UI to show this. For now, maybe just alert or refresh health?
+        // Let's assume we'll add a 'temperature' tab to health section later or just show it.
+        alert('Temperature saved!');
     },
 
     saveGrowthRecord() {
+        const dateInput = document.getElementById('growth-date').value;
         const record = {
-            date: document.getElementById('growth-date').value,
-            weight: parseFloat(document.getElementById('growth-weight').value),
-            height: parseFloat(document.getElementById('growth-height').value)
+            date: dateInput ? new Date(dateInput).toISOString() : new Date().toISOString(),
+            weight: parseFloat(document.getElementById('growth-weight').value) || 0,
+            height: parseFloat(document.getElementById('growth-height').value) || 0
         };
+
+        if (record.weight === 0 && record.height === 0) {
+            alert('Please enter weight or height');
+            return;
+        }
+
         Store.addMeasurement(record);
         this.closeModal('add-growth-modal');
         UI.renderGrowthHistory();
