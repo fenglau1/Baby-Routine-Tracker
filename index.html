@@ -5,6 +5,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Baby Routine</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -50,73 +53,93 @@
                 <button id="add-baby-header-btn" class="icon-btn" onclick="app.openBabySwitcher()"><i
                         class="fa-solid fa-users"></i></button>
             </div>
+        </header>
 
-            <!-- Baby Profile Card -->
-            <div id="baby-profile-card" class="baby-card hidden">
-                <div class="profile-image-container">
-                    <img id="profile-img" src="assets/default-baby.png" alt="Baby"
-                        onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2NjYyI+PHBhdGggZD0iTTEyIDEyYzIuMjEgMCA0LTEuNzkgNC00cy0xLjc5LTQtNC00LTQgMS43OS00IDQgMS43OSA0IDQgNHptMCAyYy0yLjY3IDAtOCAxLjM0LTggNHYyaDE2di0yYzAtMi42Ni01LjMzLTQtOC00eiIvPjwvc3ZnPg=='">
-                    <label for="photo-upload" class="camera-btn">
-                        <i class="fa-solid fa-camera"></i>
-                    </label>
-                    <input type="file" id="photo-upload" accept="image/*" hidden
-                        onchange="app.handlePhotoUpload(this.files[0])">
-                </div>
-                <h2 id="baby-name">Baby Name</h2>
-                <p id="baby-age" class="subtitle">0 months old</p>
-
-                <div class="stats-row">
-                    <div class="stat-item">
-                        <span class="stat-label">Weight</span>
-                        <span id="baby-weight" class="stat-value">-- kg</span>
+        <section class="hero-profile">
+            <div id="baby-profile-card" class="profile-card">
+                <div class="profile-header">
+                    <div class="avatar-container">
+                        <img src="assets/default-baby.png" alt="Baby" id="current-baby-avatar">
+                        <div class="camera-btn" onclick="document.getElementById('profile-upload').click()">
+                            <i class="fas fa-camera"></i>
+                        </div>
+                        <input type="file" id="profile-upload" accept="image/*" style="display: none;"
+                            onchange="app.handleProfileImageUpload(this)">
                     </div>
-                    <div class="divider"></div>
-                    <div class="stat-item">
-                        <span class="stat-label">Height</span>
-                        <span id="baby-height" class="stat-value">-- cm</span>
+                    <div class="profile-info">
+                        <h2 id="current-baby-name">Select Baby</h2>
+                        <p id="current-baby-age">0 months</p>
                     </div>
                 </div>
-
+                <div class="profile-stats">
+                    <div class="stat-item clickable" onclick="app.quickUpdateStat('weight')">
+                        <span class="label">Weight</span>
+                        <span class="value" id="current-baby-weight">-- kg</span>
+                    </div>
+                    <div class="stat-item clickable" onclick="app.quickUpdateStat('height')">
+                        <span class="label">Height</span>
+                        <span class="value" id="current-baby-height">-- cm</span>
+                    </div>
+                </div>
                 <div class="action-row">
                     <button id="update-stats-btn" class="sm-btn" onclick="app.openModal('edit-profile-modal')">Edit
                         Profile</button>
                     <button id="view-growth-btn" class="sm-btn secondary"
                         onclick="app.openModal('growth-modal')">Growth</button>
-                    <button id="view-health-btn" class="sm-btn secondary"
-                        onclick="app.openModal('health-view')">Health</button>
                 </div>
             </div>
-        </header>
+        </section>
+
+        <!-- Distinct Temperature Section -->
+        <section id="temperature-section" class="temp-card-container" style="display: none;">
+            <div class="temp-card" onclick="app.openModal('temperature-modal')">
+                <div style="display: flex; align-items: center; flex: 1; justify-content: space-between;">
+                    <div class="temp-info">
+                        <h3>Temperature</h3>
+                        <p id="latest-temp-time">Just now</p>
+                    </div>
+                    <div class="temp-value" id="latest-temp-value">--°C</div>
+                </div>
+                <div class="temp-actions">
+                    <div class="temp-action-btn" onclick="event.stopPropagation(); window.ui.openTemperatureHistory()">
+                        <i class="fa-solid fa-list"></i>
+                    </div>
+                    <div class="temp-action-btn" onclick="event.stopPropagation(); window.ui.openTemperatureChart()">
+                        <i class="fa-solid fa-chart-line"></i>
+                    </div>
+                </div>
+                <canvas id="tempSparkline"></canvas>
+            </div>
+        </section>
 
         <!-- Main Content -->
         <main id="main-content">
             <!-- Quick Actions -->
             <section class="quick-actions">
-                <button class="action-card milk" onclick="app.openModal('milk-modal')">
+                <div class="action-card milk" onclick="app.openModal('milk-modal')">
                     <div class="icon-circle"><i class="fa-solid fa-bottle-water"></i></div>
                     <span>Log Milk</span>
-                </button>
-                <button class="action-card food" onclick="app.openModal('food-modal')">
+                </div>
+                <div class="action-card food" onclick="app.openModal('food-modal')">
                     <div class="icon-circle"><i class="fa-solid fa-utensils"></i></div>
                     <span>Log Food</span>
-                </button>
-                <button class="action-card poop" onclick="app.openModal('poop-modal')">
-                    <div class="icon-circle poop"><i class="fa-solid fa-poo"></i></div>
-                    <span>Poop</span>
-                </button>
-                <button class="action-card health" onclick="app.openModal('health-view')">
-                    <div class="icon-circle health" style="background: #E1BEE7; color: #9C27B0;"><i
-                            class="fa-solid fa-heart-pulse"></i></div>
+                </div>
+                <div class="action-card poop" onclick="app.openModal('poop-modal')">
+                    <div class="icon-circle"><i class="fa-solid fa-poo"></i></div>
+                    <span>Log Poop</span>
+                </div>
+                <div class="action-card health" onclick="app.openModal('health-view')">
+                    <div class="icon-circle"><i class="fa-solid fa-heart-pulse"></i></div>
                     <span>Health</span>
-                </button>
+                </div>
             </section>
 
             <!-- Recent History -->
             <section class="history-section">
                 <div class="section-header">
                     <h3>Recent Activity</h3>
-                    <button id="view-all-history-btn" class="link-btn"
-                        onclick="app.openModal('history-view'); UI.renderFullHistory('milk')">View All</button>
+                    <button id="view-all-history-btn" class="link-btn" onclick="app.openModal('history-view')">View
+                        All</button>
                 </div>
                 <div id="recent-list" class="record-list">
                     <!-- Records will be injected here -->
@@ -348,343 +371,370 @@
                             <i class="fa-solid fa-file-import"></i> Import Data (JSON)
                         </button>
                         <input type="file" id="import-file" accept=".json" hidden onchange="app.importData(this)">
-                        <button class="setting-btn" onclick="app.shareAccess()">
-                            <i class="fa-solid fa-share-nodes"></i> Share Access
-                        </button>
-                        <button class="setting-btn destructive" onclick="app.deleteAllData()">
-                            <i class="fa-solid fa-trash"></i> Delete All Data
-                        </button>
                     </div>
-                </div>
-            </div>
-        </div>
 
-        <!-- History View (Fullscreen Modal) -->
-        <div id="history-view" class="modal hidden">
-            <div class="modal-content fullscreen">
-                <div class="modal-header">
-                    <button class="back-btn" onclick="app.closeModal('history-view')"><i
-                            class="fa-solid fa-chevron-left"></i> Back</button>
-                    <h3>History</h3>
-                    <div style="width: 40px;"></div>
-                </div>
-                <div class="modal-body">
-                    <div class="tabs">
-                        <button class="tab active" onclick="ui.switchHistoryTab('milk')">Milk</button>
-                        <button class="tab" onclick="ui.switchHistoryTab('food')">Food</button>
-                        <button class="tab" onclick="ui.switchHistoryTab('poop')">Poop</button>
-                    </div>
-                    <div id="history-list" class="record-list">
-                        <!-- Full history injected here -->
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Charts View (Fullscreen Modal) -->
-        <div id="charts-view" class="modal hidden">
-            <div class="modal-content fullscreen">
-                <div class="modal-header">
-                    <button class="back-btn" onclick="app.closeModal('charts-view')"><i
-                            class="fa-solid fa-chevron-left"></i> Back</button>
-                    <h3>Charts & Trends</h3>
-                    <div style="width: 40px;"></div>
-                </div>
-                <div class="modal-body">
-                    <div class="chart-card">
-                        <h4>Milk Intake (Last 7 Days)</h4>
-                        <canvas id="milkChart"></canvas>
-                    </div>
-                    <div class="chart-card">
-                        <h4>Meal Frequency</h4>
-                        <canvas id="foodChart"></canvas>
-                    </div>
-                    <div class="chart-card">
-                        <h4>Poop Colors</h4>
-                        <canvas id="poopChart"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Health View (Fullscreen Modal) -->
-        <div id="health-view" class="modal hidden">
-            <div class="modal-content fullscreen">
-                <div class="modal-header">
-                    <button class="back-btn" onclick="app.closeModal('health-view')"><i
-                            class="fa-solid fa-chevron-left"></i> Back</button>
-                    <h3>Health & Vaccines</h3>
-                    <div class="health-grid">
-                        <button class="health-btn"
-                            onclick="app.openModal('add-health-modal'); document.getElementById('health-type').value='appointment'">
-                            <i class="fa-solid fa-user-doctor" style="color:#E91E63"></i>
-                            <span>Doctor Visit</span>
-                        </button>
-                        <button class="health-btn"
-                            onclick="app.openModal('add-health-modal'); document.getElementById('health-type').value='vaccine'">
-                            <i class="fa-solid fa-syringe" style="color:#9C27B0"></i>
-                            <span>Vaccine</span>
-                        </button>
-                        <button class="health-btn" onclick="app.openModal('temperature-modal')">
-                            <i class="fa-solid fa-temperature-three-quarters" style="color:#FF5722"></i>
-                            <span>Temperature</span>
-                        </button>
-                    </div>
-                </div>
-                <div class="modal-body">
-                    <div class="tabs">
-                        <button class="tab-btn active" onclick="ui.switchHealthTab(this, 'appointments')">Doctor
-                            Visits</button>
-                        <button class="tab-btn" onclick="ui.switchHealthTab(this, 'vaccines')">Vaccines</button>
-                        <button class="tab-btn" onclick="ui.switchHealthTab(this, 'temperature')">Temperature</button>
-                    </div>
-                    <div id="health-list" class="record-list">
-                        <!-- Health records injected here -->
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Temperature Modal -->
-        <div id="temperature-modal" class="modal hidden">
-            <div class="modal-content bottom-sheet">
-                <div class="modal-header">
-                    <h3>Log Temperature</h3>
-                    <button class="close-btn" onclick="app.closeModal('temperature-modal')"><i
-                            class="fa-solid fa-xmark"></i></button>
-                </div>
-                <div class="modal-body">
-                    <div class="form-group">
-                        <label>Time</label>
-                        <input type="datetime-local" id="temp-time">
-                    </div>
-                    <div class="form-group">
-                        <label>Temperature (°C)</label>
-                        <input type="number" id="temp-value" step="0.1" placeholder="36.5">
-                    </div>
-                    <div class="form-group">
-                        <label>Notes</label>
-                        <textarea id="temp-notes" rows="3" placeholder="Optional notes..."></textarea>
-                    </div>
-                    <button class="primary-btn" onclick="app.saveTemperatureRecord()">Save Record</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Add Health Record Modal -->
-        <div id="add-health-modal" class="modal hidden" style="z-index: 1100;">
-            <div class="modal-content bottom-sheet">
-                <div class="modal-header">
-                    <h3>Add Health Record</h3>
-                    <button class="close-btn" onclick="app.closeModal('add-health-modal')"><i
-                            class="fa-solid fa-xmark"></i></button>
-                </div>
-                <div class="modal-body">
-                    <div class="form-group">
-                        <label>Type</label>
-                        <select id="health-type" onchange="ui.toggleHealthInputs()">
-                            <option value="appointment">Appointment</option>
-                            <option value="vaccine">Vaccine</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Title / Vaccine Name</label>
-                        <input type="text" id="health-title" placeholder="e.g. Pediatrician Visit">
-                    </div>
-                    <div class="form-group">
-                        <label>Date & Time</label>
-                        <input type="datetime-local" id="health-date">
-                    </div>
-                    <div class="form-group" id="vaccine-dose-group" class="hidden">
-                        <label>Dose Number</label>
-                        <input type="number" id="vaccine-dose" value="1">
-                    </div>
-                    <div class="form-group">
-                        <label>Notes / Location</label>
-                        <input type="text" id="health-notes">
-                    </div>
-                    <button class="primary-btn" onclick="app.saveHealthRecord()">Save</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Growth Modal -->
-        <div id="growth-modal" class="modal hidden">
-            <div class="modal-content fullscreen">
-                <div class="modal-header">
-                    <button class="back-btn" onclick="app.closeModal('growth-modal')"><i
-                            class="fa-solid fa-chevron-left"></i> Back</button>
-                    <h3>Growth Tracker</h3>
-                    <button class="icon-btn" onclick="app.openModal('add-growth-modal')"><i
-                            class="fa-solid fa-plus"></i></button>
-                </div>
-                <div class="modal-body">
-                    <div class="chart-card">
-                        <h4>Weight History</h4>
-                        <canvas id="weightChart"></canvas>
-                    </div>
-                    <div class="chart-card">
-                        <h4>Height History</h4>
-                        <canvas id="heightChart"></canvas>
-                    </div>
-                    <div class="section-header">
-                        <h3>History</h3>
-                    </div>
-                    <div id="growth-list" class="record-list">
-                        <!-- Injected via JS -->
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Add Growth Modal -->
-        <div id="add-growth-modal" class="modal hidden" style="z-index: 1100;">
-            <div class="modal-content bottom-sheet">
-                <div class="modal-header">
-                    <h3>Log Measurement</h3>
-                    <button class="close-btn" onclick="app.closeModal('add-growth-modal')"><i
-                            class="fa-solid fa-xmark"></i></button>
-                </div>
-                <div class="modal-body">
-                    <div class="form-group">
-                        <label>Date</label>
-                        <input type="date" id="growth-date">
-                    </div>
-                    <div class="form-group">
-                        <label>Weight (kg)</label>
-                        <input type="number" id="growth-weight" step="0.01">
-                    </div>
-                    <div class="form-group">
-                        <label>Height (cm)</label>
-                        <input type="number" id="growth-height" step="0.1">
-                    </div>
-                    <button class="primary-btn" onclick="app.saveGrowthRecord()">Save</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Edit Profile Modal -->
-        <div id="edit-profile-modal" class="modal hidden">
-            <div class="modal-content bottom-sheet">
-                <div class="modal-header">
-                    <h3>Edit Profile</h3>
-                    <button class="close-btn" onclick="app.closeModal('edit-profile-modal')"><i
-                            class="fa-solid fa-xmark"></i></button>
-                </div>
-                <div class="modal-body">
-                    <div class="form-group">
-                        <label>Baby's Name</label>
-                        <input type="text" id="edit-name">
-                    </div>
-                    <div class="form-group">
-                        <label>Date of Birth</label>
-                        <input type="date" id="edit-dob">
-                    </div>
-                    <div class="form-group">
-                        <label>Gender</label>
-                        <select id="edit-gender">
-                            <option value="Boy">Boy</option>
-                            <option value="Girl">Girl</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Current Weight (kg)</label>
-                        <input type="number" id="edit-weight" step="0.01">
-                    </div>
-                    <div class="form-group">
-                        <label>Current Height (cm)</label>
-                        <input type="number" id="edit-height" step="0.1">
-                    </div>
-                    <button class="primary-btn" onclick="app.saveProfileUpdates()">Save Changes</button>
-                    <button class="destructive-btn"
-                        style="margin-top: 10px; width: 100%; padding: 12px; border-radius: 12px; border: none; background: #FFEBEE; color: #D32F2F; font-weight: 600;"
-                        onclick="app.deleteCurrentBaby()">Delete Profile</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Create Baby Modal -->
-        <div id="create-baby-modal" class="modal hidden" style="z-index: 1300;">
-            <div class="modal-content bottom-sheet">
-                <div class="modal-header">
-                    <h3>Add New Baby</h3>
-                    <button id="create-baby-close-btn" class="close-btn"
-                        onclick="app.closeModal('create-baby-modal')"><i class="fa-solid fa-xmark"></i></button>
-                </div>
-                <div class="modal-body">
-                    <div class="form-group">
-                        <label>Baby's Name</label>
-                        <input type="text" id="create-name" placeholder="Enter name">
-                    </div>
-                    <div class="form-group">
-                        <label>Date of Birth</label>
-                        <input type="date" id="create-dob">
-                    </div>
-                    <div class="form-group">
-                        <label>Gender</label>
-                        <select id="create-gender">
-                            <option value="Boy">Boy</option>
-                            <option value="Girl">Girl</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Current Weight (kg)</label>
-                        <input type="number" id="create-weight" step="0.01" placeholder="3.5">
-                    </div>
-                    <div class="form-group">
-                        <label>Current Height (cm)</label>
-                        <input type="number" id="create-height" step="0.1" placeholder="50">
-                    </div>
-                    <button class="primary-btn" onclick="app.saveNewBaby()">Add Baby</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Share Access Modal -->
-        <div id="share-access-modal" class="modal hidden" style="z-index: 1400;">
-            <div class="modal-content bottom-sheet">
-                <div class="modal-header">
-                    <h3>Share Access</h3>
-                    <button class="close-btn" onclick="app.closeModal('share-access-modal')"><i
-                            class="fa-solid fa-xmark"></i></button>
-                </div>
-                <div class="modal-body">
-                    <p style="color: var(--secondary-text); margin-bottom: 15px;">Invite family members to track this
-                        baby's routine. They must sign in with Google.</p>
-                    <div class="form-group">
-                        <label>Google Email Address</label>
-                        <input type="email" id="share-email" placeholder="example@gmail.com">
-                    </div>
-                    <button class="primary-btn" onclick="app.sendInvite()">Send Invite</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Force Login Modal -->
-        <div id="force-login-modal" class="modal hidden" style="z-index: 2000;">
-            <div class="modal-content bottom-sheet" style="text-align: center;">
-                <div class="modal-header" style="justify-content: center;">
-                    <h3>Welcome to Baby Routine</h3>
-                </div>
-                <div class="modal-body">
-                    <p style="margin-bottom: 20px; color: var(--secondary-text);">Please sign in to continue and sync
-                        your data.</p>
-                    <button class="primary-btn" onclick="Auth.login()">
-                        <i class="fa-brands fa-google" style="margin-right: 8px;"></i> Sign in with Google
+                    <button class="setting-btn" onclick="app.shareAccess()">
+                        <i class="fa-solid fa-share-nodes"></i> Share Access
+                    </button>
+                    <button class="setting-btn destructive" onclick="app.deleteAllData()">
+                        <i class="fa-solid fa-trash"></i> Delete All Data
                     </button>
                 </div>
             </div>
         </div>
+    </div>
 
-        <!-- Loading Overlay -->
-        <div id="loading-overlay" class="modal hidden" style="z-index: 3000; background: rgba(255,255,255,0.9);">
-            <div class="modal-content" style="text-align: center; box-shadow: none; background: transparent;">
-                <div class="spinner"
-                    style="width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid var(--primary-color); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px;">
+    <!-- History View (Fullscreen Modal) -->
+    <div id="history-view" class="modal hidden">
+        <div class="modal-content fullscreen">
+            <div class="modal-header">
+                <button class="back-btn" onclick="app.closeModal('history-view')"><i
+                        class="fa-solid fa-chevron-left"></i> Back</button>
+                <h3>History</h3>
+                <div style="width: 40px;"></div>
+            </div>
+            <div class="modal-body">
+                <div class="tabs">
+                    <button class="tab-btn active" onclick="ui.switchHistoryTab(this, 'milk')">Milk</button>
+                    <button class="tab-btn" onclick="ui.switchHistoryTab(this, 'food')">Food</button>
+                    <button class="tab-btn" onclick="ui.switchHistoryTab(this, 'poop')">Poop</button>
+                    <button class="tab-btn" onclick="ui.switchHistoryTab(this, 'temperature')">Temperature</button>
                 </div>
-                <h3 style="color: var(--primary-color);">Syncing Data...</h3>
+                <div id="history-list" class="record-list">
+                    <!-- Full history injected here -->
+                </div>
             </div>
         </div>
+    </div>
+
+    <!-- Charts View (Fullscreen Modal) -->
+    <div id="charts-view" class="modal hidden">
+        <div class="modal-content fullscreen">
+            <div class="modal-header">
+                <button class="back-btn" onclick="app.closeModal('charts-view')"><i
+                        class="fa-solid fa-chevron-left"></i> Back</button>
+                <h3>Charts & Trends</h3>
+                <div style="width: 40px;"></div>
+            </div>
+            <div class="modal-body">
+                <div class="chart-controls"
+                    style="display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; align-items: center; margin-bottom: 20px; padding: 0 10px;">
+                    <button class="secondary-btn sm" onclick="Charts.navigateCharts(-7)">
+                        <i class="fa-solid fa-chevron-left"></i> Prev
+                    </button>
+
+                    <div class="date-range-inputs" style="display: flex; align-items: center; gap: 5px;">
+                        <input type="date" id="chart-start-date" class="date-input"
+                            onchange="Charts.handleDateChange()">
+                        <span style="color: var(--text-secondary);">-</span>
+                        <input type="date" id="chart-end-date" class="date-input" onchange="Charts.handleDateChange()">
+                    </div>
+
+                    <button class="secondary-btn sm" onclick="Charts.navigateCharts(7)">
+                        Next <i class="fa-solid fa-chevron-right"></i>
+                    </button>
+                </div>
+                <div class="chart-card">
+                    <h4>Milk Intake (Last 7 Days)</h4>
+                    <canvas id="milkChart"></canvas>
+                </div>
+                <div class="chart-card">
+                    <h4>Meal Frequency</h4>
+                    <canvas id="foodChart"></canvas>
+                </div>
+                <div class="chart-card">
+                    <h4>Poop Colors</h4>
+                    <canvas id="poopChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Health View (Fullscreen Modal) -->
+    <div id="health-view" class="modal hidden">
+        <div class="modal-content fullscreen">
+            <div class="modal-header">
+                <button class="back-btn" onclick="app.closeModal('health-view')"><i
+                        class="fa-solid fa-chevron-left"></i> Back</button>
+                <h3>Health & Vaccines</h3>
+                <div class="health-grid">
+                    <button class="health-btn doctor"
+                        onclick="app.openModal('add-health-modal'); document.getElementById('health-type').value='appointment'; document.getElementById('add-health-modal-title').textContent='Log Doctor Visit'; ui.toggleHealthInputs()">
+                        <i class="fa-solid fa-user-doctor"></i>
+                        <span>Doctor Visit</span>
+                    </button>
+                    <button class="health-btn vaccine"
+                        onclick="app.openModal('add-health-modal'); document.getElementById('health-type').value='vaccine'; document.getElementById('add-health-modal-title').textContent='Log Vaccine'; ui.toggleHealthInputs()">
+                        <i class="fa-solid fa-syringe"></i>
+                        <span>Vaccine</span>
+                    </button>
+                </div>
+            </div>
+            <div class="modal-body">
+                <div class="tabs">
+                    <button class="tab-btn active" onclick="ui.switchHealthTab(this, 'appointments')">Doctor
+                        Visits</button>
+                    <button class="tab-btn" onclick="ui.switchHealthTab(this, 'vaccines')">Vaccines</button>
+                </div>
+                <div id="health-list" class="record-list">
+                    <!-- Health records injected here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Temperature Modal -->
+    <div id="temperature-modal" class="modal hidden">
+        <div class="modal-content bottom-sheet">
+            <div class="modal-header">
+                <h3>Log Temperature</h3>
+                <button class="close-btn" onclick="app.closeModal('temperature-modal')"><i
+                        class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Time</label>
+                    <input type="datetime-local" id="temp-time">
+                </div>
+                <div class="form-group">
+                    <label>Temperature (°C)</label>
+                    <input type="number" id="temp-value" step="0.1" placeholder="36.5">
+                </div>
+                <div class="form-group">
+                    <label>Notes</label>
+                    <textarea id="temp-notes" rows="3" placeholder="Optional notes..."></textarea>
+                </div>
+                <button class="primary-btn" onclick="app.saveTemperatureRecord()">Save Record</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Health Record Modal -->
+    <div id="add-health-modal" class="modal hidden" style="z-index: 1100;">
+        <div class="modal-content bottom-sheet">
+            <div class="modal-header">
+                <h3 id="add-health-modal-title">Add Health Record</h3>
+                <button class="close-btn" onclick="app.closeModal('add-health-modal')"><i
+                        class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="health-type">
+                <div class="form-group">
+                    <label>Title / Vaccine Name</label>
+                    <input type="text" id="health-title" placeholder="e.g. Pediatrician Visit">
+                </div>
+                <div class="form-group">
+                    <label>Date & Time</label>
+                    <input type="datetime-local" id="health-date">
+                </div>
+                <div class="form-group" id="vaccine-dose-group" class="hidden">
+                    <label>Dose Number</label>
+                    <input type="number" id="vaccine-dose" value="1">
+                </div>
+                <div class="form-group">
+                    <label>Notes / Location</label>
+                    <input type="text" id="health-notes">
+                </div>
+                <button class="primary-btn" onclick="app.saveHealthRecord()">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Growth Modal -->
+    <div id="growth-modal" class="modal hidden">
+        <div class="modal-content fullscreen">
+            <div class="modal-header">
+                <button class="back-btn" onclick="app.closeModal('growth-modal')"><i
+                        class="fa-solid fa-chevron-left"></i> Back</button>
+                <h3>Growth Tracker</h3>
+                <button class="icon-btn" onclick="app.openModal('add-growth-modal')"><i
+                        class="fa-solid fa-plus"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="chart-card">
+                    <h4>Weight History</h4>
+                    <canvas id="weightChart"></canvas>
+                </div>
+                <div class="chart-card">
+                    <h4>Height History</h4>
+                    <canvas id="heightChart"></canvas>
+                </div>
+                <div class="section-header">
+                    <h3>History</h3>
+                </div>
+                <div id="growth-list" class="record-list">
+                    <!-- Injected via JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Growth Modal -->
+    <div id="add-growth-modal" class="modal hidden" style="z-index: 1100;">
+        <div class="modal-content bottom-sheet">
+            <div class="modal-header">
+                <h3>Log Measurement</h3>
+                <button class="close-btn" onclick="app.closeModal('add-growth-modal')"><i
+                        class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Date</label>
+                    <input type="date" id="growth-date">
+                </div>
+                <div class="form-group">
+                    <label>Weight (kg)</label>
+                    <input type="number" id="growth-weight" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label>Height (cm)</label>
+                    <input type="number" id="growth-height" step="0.1">
+                </div>
+                <button class="primary-btn" onclick="app.saveGrowthRecord()">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Profile Modal -->
+    <div id="edit-profile-modal" class="modal hidden">
+        <div class="modal-content bottom-sheet">
+            <div class="modal-header">
+                <h3>Edit Profile</h3>
+                <button class="close-btn" onclick="app.closeModal('edit-profile-modal')"><i
+                        class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Baby's Name</label>
+                    <input type="text" id="edit-name">
+                </div>
+                <div class="form-group">
+                    <label>Date of Birth</label>
+                    <input type="date" id="edit-dob">
+                </div>
+                <div class="form-group">
+                    <label>Gender</label>
+                    <select id="edit-gender">
+                        <option value="Boy">Boy</option>
+                        <option value="Girl">Girl</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Current Weight (kg)</label>
+                    <input type="number" id="edit-weight" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label>Current Height (cm)</label>
+                    <input type="number" id="edit-height" step="0.1">
+                </div>
+                <button class="primary-btn" onclick="app.saveProfileUpdates()">Save Changes</button>
+                <button class="destructive-btn"
+                    style="margin-top: 10px; width: 100%; padding: 12px; border-radius: 12px; border: none; background: #FFEBEE; color: #D32F2F; font-weight: 600;"
+                    onclick="app.deleteCurrentBaby()">Delete Profile</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Baby Modal -->
+    <div id="create-baby-modal" class="modal hidden" style="z-index: 1300;">
+        <div class="modal-content bottom-sheet">
+            <div class="modal-header">
+                <h3>Add New Baby</h3>
+                <button id="create-baby-close-btn" class="close-btn" onclick="app.closeModal('create-baby-modal')"><i
+                        class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Baby's Name</label>
+                    <input type="text" id="create-name" placeholder="Enter name">
+                </div>
+                <div class="form-group">
+                    <label>Date of Birth</label>
+                    <input type="date" id="create-dob">
+                </div>
+                <div class="form-group">
+                    <label>Gender</label>
+                    <select id="create-gender">
+                        <option value="Boy">Boy</option>
+                        <option value="Girl">Girl</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Current Weight (kg)</label>
+                    <input type="number" id="create-weight" step="0.01" placeholder="3.5">
+                </div>
+                <div class="form-group">
+                    <label>Current Height (cm)</label>
+                    <input type="number" id="create-height" step="0.1" placeholder="50">
+                </div>
+                <button class="primary-btn" onclick="app.saveNewBaby()">Add Baby</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Share Access Modal -->
+    <div id="share-access-modal" class="modal hidden" style="z-index: 1400;">
+        <div class="modal-content bottom-sheet">
+            <div class="modal-header">
+                <h3>Share Access</h3>
+                <button class="close-btn" onclick="app.closeModal('share-access-modal')"><i
+                        class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <p style="color: var(--secondary-text); margin-bottom: 15px;">Invite family members to track this
+                    baby's routine. They must sign in with Google.</p>
+                <div class="form-group">
+                    <label>Google Email Address</label>
+                    <input type="email" id="share-email" placeholder="example@gmail.com">
+                </div>
+                <button class="primary-btn" onclick="app.sendInvite()">Send Invite</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Force Login Modal -->
+    <div id="force-login-modal" class="modal hidden" style="z-index: 2000;">
+        <div class="modal-content bottom-sheet" style="text-align: center;">
+            <div class="modal-header" style="justify-content: center;">
+                <h3>Welcome to Baby Routine</h3>
+            </div>
+            <div class="modal-body">
+                <p style="margin-bottom: 20px; color: var(--secondary-text);">Please sign in to continue and sync
+                    your data.</p>
+                <button class="primary-btn" onclick="Auth.login()">
+                    <i class="fa-brands fa-google" style="margin-right: 8px;"></i> Sign in with Google
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Update Stat Modal -->
+    <div id="quick-update-modal" class="modal hidden">
+        <div class="modal-content bottom-sheet">
+            <div class="modal-header">
+                <h3 id="quick-update-title">Update Weight</h3>
+                <button class="close-btn" onclick="app.closeModal('quick-update-modal')"><i
+                        class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label id="quick-update-label">Weight (kg)</label>
+                    <input type="number" id="quick-update-value" step="0.1" min="0">
+                </div>
+                <button class="primary-btn" onclick="app.saveQuickUpdate()">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="modal hidden" style="z-index: 3000; background: rgba(255,255,255,0.9);">
+        <div class="modal-content" style="text-align: center; box-shadow: none; background: transparent;">
+            <div class="spinner"
+                style="width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid var(--primary-color); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px;">
+            </div>
+            <h3 style="color: var(--primary-color);">Syncing Data...</h3>
+        </div>
+    </div>
 
     </div>
 

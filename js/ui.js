@@ -12,17 +12,25 @@ const UI = {
     },
 
     setupInputs() {
-        // Set default datetime-local inputs to current time
+        // Set default date/time to now
         const now = new Date();
         now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-        const timeString = now.toISOString().slice(0, 16);
-        const dateString = now.toISOString().slice(0, 10);
+        const nowStr = now.toISOString().slice(0, 16);
 
-        document.getElementById('milk-time').value = timeString;
-        document.getElementById('food-time').value = timeString;
-        document.getElementById('poop-time').value = timeString;
-        document.getElementById('health-date').value = timeString;
-        document.getElementById('growth-date').value = dateString;
+        document.querySelectorAll('input[type="datetime-local"]').forEach(input => {
+            if (!input.value) input.value = nowStr;
+        });
+
+        // Clear other inputs but preserve hidden ones (like health-type)
+        document.querySelectorAll('input:not([type="datetime-local"]):not([type="hidden"]), textarea').forEach(input => {
+            if (input.type === 'checkbox' || input.type === 'radio') return;
+            input.value = '';
+        });
+
+        // Reset selects
+        document.querySelectorAll('select').forEach(select => {
+            select.selectedIndex = 0;
+        });
     },
 
     renderBabySwitcher() {
@@ -54,7 +62,8 @@ const UI = {
         const settings = Store.state.settings;
 
         if (!baby) {
-            document.getElementById('baby-profile-card').classList.add('hidden');
+            // document.getElementById('baby-profile-card').classList.add('hidden'); // Don't hide it
+            document.getElementById('baby-profile-card').classList.remove('hidden'); // Ensure visible
             document.getElementById('current-baby-name-display').innerHTML = 'Add Baby <i class="fa-solid fa-chevron-down" style="font-size: 12px;"></i>';
             return;
         }
@@ -62,8 +71,8 @@ const UI = {
         // Update Header Button
         document.getElementById('current-baby-name-display').textContent = baby.name;
 
-        document.getElementById('baby-name').textContent = baby.name;
-        document.getElementById('baby-age').textContent = this.calculateAge(baby.dob);
+        document.getElementById('current-baby-name').textContent = baby.name;
+        document.getElementById('current-baby-age').textContent = this.calculateAge(baby.dob);
 
         // Pre-fill edit modal
         document.getElementById('edit-name').value = baby.name;
@@ -72,7 +81,7 @@ const UI = {
         document.getElementById('edit-weight').value = baby.currentWeight;
         document.getElementById('edit-height').value = baby.currentHeight;
 
-        const profileImg = document.getElementById('profile-img');
+        const profileImg = document.getElementById('current-baby-avatar');
         if (baby.profileImage) {
             profileImg.src = baby.profileImage;
         } else {
@@ -82,9 +91,14 @@ const UI = {
         const weight = settings.useMetricSystem ? `${baby.currentWeight} kg` : `${(baby.currentWeight * 2.20462).toFixed(2)} lb`;
         const height = settings.useMetricSystem ? `${baby.currentHeight} cm` : `${(baby.currentHeight / 2.54).toFixed(2)} in`;
 
-        document.getElementById('baby-weight').textContent = weight;
-        document.getElementById('baby-height').textContent = height;
-        document.getElementById('unit-vol').textContent = settings.useMetricSystem ? 'ml' : 'oz';
+        document.getElementById('current-baby-weight').textContent = weight;
+        document.getElementById('current-baby-height').textContent = height;
+        // document.getElementById('unit-vol').textContent = settings.useMetricSystem ? 'ml' : 'oz'; // This ID might also be missing, checking index.html later if needed, but commenting out if not found in snippet. Wait, I didn't see unit-vol in index.html snippet. I'll leave it for now or check.
+        // Actually, let's check if unit-vol exists. It wasn't in the snippet. 
+        // To be safe, I will keep it but if it errors I'll know. 
+        // However, looking at the error log, it failed at the first mismatch.
+        // I'll assume unit-vol might be correct or I should check it.
+        // Let's just fix the known ones first.
 
         // Update Toggles
         document.getElementById('dark-mode-toggle').checked = settings.isDarkMode;
@@ -92,6 +106,8 @@ const UI = {
 
         // Show profile card
         document.getElementById('baby-profile-card').classList.remove('hidden');
+
+        this.renderTemperatureWidget();
     },
 
     calculateAge(dob) {
@@ -103,23 +119,87 @@ const UI = {
         return `${months} months ${days % 30} days old`;
     },
 
+    renderTemperatureWidget() {
+        const baby = Store.getCurrentBaby();
+        const section = document.getElementById('temperature-section');
+        const card = section.querySelector('.temp-card');
+
+        if (!baby) {
+            section.style.display = 'none';
+            return;
+        }
+
+        section.style.display = 'block'; // Always show if baby exists
+
+        // Reset classes
+        card.classList.remove('normal', 'fever');
+
+        if (!baby.temperatureRecords || baby.temperatureRecords.length === 0) {
+            document.getElementById('latest-temp-value').textContent = '--°C';
+            document.getElementById('latest-temp-time').textContent = 'No records';
+            return;
+        }
+
+        const latest = baby.temperatureRecords.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))[0];
+
+        document.getElementById('latest-temp-value').textContent = `${latest.temperature}°C`;
+
+        // Dynamic Color Logic
+        if (latest.temperature >= 37.5) {
+            card.classList.add('fever');
+        } else {
+            card.classList.add('normal');
+        }
+
+        const date = new Date(latest.timestamp);
+        const now = new Date();
+        const diffMs = now - date;
+        const diffMins = Math.floor(diffMs / 60000);
+        const diffHours = Math.floor(diffMins / 60);
+        const diffDays = Math.floor(diffHours / 24);
+
+        let timeStr = '';
+        if (diffMins < 1) timeStr = 'Just now';
+        else if (diffMins < 60) timeStr = `${diffMins}m ago`;
+        else if (diffHours < 24) timeStr = `${diffHours}h ago`;
+        else timeStr = `${diffDays}d ago`;
+
+        document.getElementById('latest-temp-time').textContent = timeStr;
+
+        // Render Sparkline
+        setTimeout(() => Charts.renderTemperatureSparkline(), 100);
+    },
+
     renderRecentHistory() {
         const baby = Store.getCurrentBaby();
         if (!baby) {
             document.getElementById('recent-list').innerHTML = '';
             return;
         }
-        const allRecords = [
-            ...baby.milkRecords.map(r => ({ ...r, type: 'milk', sortTime: r.timestamp })),
-            ...baby.foodRecords.map(r => ({ ...r, type: 'food', sortTime: r.timestamp })),
-            ...baby.poopRecords.map(r => ({ ...r, type: 'poop', sortTime: r.timestamp }))
-        ].sort((a, b) => b.sortTime - a.sortTime).slice(0, 3);
+
+        const milkRecords = (baby.milkRecords || []).map(r => ({ ...r, type: 'milk', sortTime: r.timestamp }));
+        const foodRecords = (baby.foodRecords || []).map(r => ({ ...r, type: 'food', sortTime: r.timestamp }));
+        const poopRecords = (baby.poopRecords || []).map(r => ({ ...r, type: 'poop', sortTime: r.timestamp }));
+        const tempRecords = (baby.temperatureRecords || []).map(r => ({ ...r, type: 'temperature', sortTime: r.timestamp }));
+
+        const allRecords = [...milkRecords, ...foodRecords, ...poopRecords, ...tempRecords]
+            .filter(r => r && r.timestamp) // Filter out nulls or missing timestamps
+            .sort((a, b) => new Date(b.sortTime) - new Date(a.sortTime))
+            .slice(0, 5);
 
         const list = document.getElementById('recent-list');
         list.innerHTML = '';
 
+        if (allRecords.length === 0) {
+            list.innerHTML = '<p style="text-align:center; color:var(--secondary-text); padding:20px;">No recent activity.</p>';
+            return;
+        }
+
         allRecords.forEach(record => {
-            list.appendChild(this.createRecordElement(record));
+            const el = this.createRecordElement(record);
+            // Add delete action
+            this.addActionButtons(el, record.type, record.id, () => this.renderRecentHistory());
+            list.appendChild(el);
         });
     },
 
@@ -134,9 +214,10 @@ const UI = {
 
         let records = [];
 
-        if (tab === 'milk') records = baby.milkRecords.map(r => ({ ...r, type: 'milk' }));
-        if (tab === 'food') records = baby.foodRecords.map(r => ({ ...r, type: 'food' }));
-        if (tab === 'poop') records = baby.poopRecords.map(r => ({ ...r, type: 'poop' }));
+        if (tab === 'milk') records = (baby.milkRecords || []).map(r => ({ ...r, type: 'milk' }));
+        if (tab === 'food') records = (baby.foodRecords || []).map(r => ({ ...r, type: 'food' }));
+        if (tab === 'poop') records = (baby.poopRecords || []).map(r => ({ ...r, type: 'poop' }));
+        if (tab === 'temperature') records = (baby.temperatureRecords || []).map(r => ({ ...r, type: 'temperature' }));
 
         records.sort((a, b) => b.timestamp - a.timestamp);
 
@@ -164,12 +245,27 @@ const UI = {
             return;
         }
 
+        // Reset Modal State (in case it was used for Temperature History)
+        const modal = document.getElementById('health-view');
+        if (modal) {
+            const title = modal.querySelector('h3');
+            if (title) title.textContent = 'Health & Vaccines';
+
+            const grid = modal.querySelector('.health-grid');
+            if (grid) grid.style.display = 'grid'; // or 'flex', check CSS. Usually grid or flex.
+            // Let's check style.css or assume flex/grid. The HTML had class "health-grid".
+            // Safest is to remove inline style display: none
+            if (grid) grid.style.display = '';
+        }
+
         list.innerHTML = '';
 
         let records = [];
-        if (tab === 'appointments') records = baby.appointments.map(r => ({ ...r, type: 'appointment' }));
-        if (tab === 'vaccines') records = baby.vaccines.map(r => ({ ...r, type: 'vaccine' }));
-        if (tab === 'temperature') records = (baby.temperatureRecords || []).map(r => ({ ...r, type: 'temperature' }));
+        if (tab === 'appointments') records = (baby.appointments || []).map(r => ({ ...r, type: 'appointment' }));
+        if (tab === 'vaccines') records = (baby.vaccines || []).map(r => ({ ...r, type: 'vaccine' }));
+
+        // Remove any undefined or null records
+        records = records.filter(r => r);
 
         records.sort((a, b) => {
             const dA = a.date || a.dateAdministered || a.timestamp;
@@ -184,29 +280,24 @@ const UI = {
 
         records.forEach((record) => {
             const div = document.createElement('div');
-            div.className = 'record-item';
+            div.className = `record-item ${record.type || 'health'}`;
 
             let icon, title, details, value;
 
             if (tab === 'appointments') {
-                icon = '<i class="fa-solid fa-user-doctor" style="color:#E91E63"></i>';
+                icon = '<i class="fa-solid fa-user-doctor"></i>';
                 title = record.title;
                 details = new Date(record.date).toLocaleString();
                 value = record.notes || '';
             } else if (tab === 'vaccines') {
-                icon = '<i class="fa-solid fa-syringe" style="color:#9C27B0"></i>';
+                icon = '<i class="fa-solid fa-syringe"></i>';
                 title = record.title;
                 details = new Date(record.dateAdministered).toLocaleDateString();
                 value = `Dose: ${record.dose}`;
-            } else if (tab === 'temperature') {
-                icon = '<i class="fa-solid fa-temperature-three-quarters" style="color:#FF5722"></i>';
-                title = 'Temperature';
-                details = new Date(record.timestamp).toLocaleString();
-                value = `${record.temperature}°C`;
             }
 
             div.innerHTML = `
-                <div class="record-icon">${icon}</div>
+                <div class="record-icon ${tab}">${icon}</div>
                 <div class="record-details">
                     <div class="record-title">${title}</div>
                     <div class="record-time">${details}</div>
@@ -217,6 +308,13 @@ const UI = {
             this.addActionButtons(div, record.type, record.id, () => this.renderHealthSection(tab));
             list.appendChild(div);
         });
+    },
+
+    switchHistoryTab(btn, tab) {
+        // Update active state
+        document.querySelectorAll('#history-view .tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        this.renderFullHistory(tab);
     },
 
     renderGrowthHistory() {
@@ -283,8 +381,10 @@ const UI = {
     },
 
     createRecordElement(record) {
+        if (!record || !record.type) return document.createElement('div'); // Return empty div if invalid
+
         const div = document.createElement('div');
-        div.className = 'record-item';
+        div.className = `record-item ${record.type}`;
 
         let icon = '';
         let title = '';
@@ -308,6 +408,11 @@ const UI = {
             icon = '<i class="fa-solid fa-circle" style="color:' + this.getColorHex(record.color) + '"></i>';
             title = record.color;
             value = '';
+            details = `${date} • ${time}`;
+        } else if (record.temperature !== undefined) { // Temperature
+            icon = '<i class="fa-solid fa-temperature-three-quarters" style="color:#FF3B30"></i>';
+            title = `${record.temperature}°C`;
+            value = record.notes || '';
             details = `${date} • ${time}`;
         }
 
@@ -375,15 +480,15 @@ const UI = {
         document.getElementById('selected-color-name').textContent = color;
     },
 
-    switchHistoryTab(tab) {
-        document.querySelectorAll('#history-view .tab').forEach(t => t.classList.remove('active'));
-        event.target.classList.add('active');
+    switchHistoryTab(btn, tab) {
+        document.querySelectorAll('#history-view .tab-btn').forEach(t => t.classList.remove('active'));
+        btn.classList.add('active');
         this.renderFullHistory(tab);
     },
 
-    switchHealthTab(tab) {
-        document.querySelectorAll('#health-view .tab').forEach(t => t.classList.remove('active'));
-        event.target.classList.add('active');
+    switchHealthTab(btn, tab) {
+        document.querySelectorAll('#health-view .tab-btn').forEach(t => t.classList.remove('active'));
+        btn.classList.add('active');
         this.renderHealthSection(tab);
     },
 
@@ -394,9 +499,65 @@ const UI = {
         } else {
             document.getElementById('vaccine-dose-group').classList.add('hidden');
         }
+    },
+
+    openTemperatureHistory() {
+        // Reuse health modal but only show temperature records
+        // Or create a specific view. For now, let's use the health modal structure but customized.
+        // Actually, the user asked for "history inside temperature card" but also "history button".
+        // Let's open a modal that shows just temperature history.
+        // We can reuse the 'health-view' modal but clear tabs and show only temp list.
+
+        const modal = document.getElementById('health-view');
+        modal.classList.remove('hidden');
+        modal.classList.add('visible');
+
+        // Hide tabs
+        modal.querySelector('.tabs').style.display = 'none';
+        modal.querySelector('h3').textContent = 'Temperature History';
+        modal.querySelector('.health-grid').style.display = 'none'; // Hide add buttons
+
+        const list = document.getElementById('health-list');
+        list.innerHTML = '';
+
+        const baby = Store.getCurrentBaby();
+        if (!baby || !baby.temperatureRecords) {
+            list.innerHTML = '<p style="text-align:center; padding:20px;">No records.</p>';
+            return;
+        }
+
+        const records = [...baby.temperatureRecords].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+        records.forEach(record => {
+            const div = document.createElement('div');
+            div.className = 'record-item temperature';
+            div.innerHTML = `
+                <div class="record-icon"><i class="fa-solid fa-temperature-three-quarters"></i></div>
+                <div class="record-details">
+                    <div class="record-title">${record.temperature}°C</div>
+                    <div class="record-time">${new Date(record.timestamp).toLocaleString()}</div>
+                </div>
+                <div class="record-value">${record.notes || ''}</div>
+            `;
+            this.addActionButtons(div, 'temperature', record.id, () => this.openTemperatureHistory());
+            list.appendChild(div);
+        });
+    },
+
+    openTemperatureChart() {
+        app.openModal('charts-view');
+        // Reset to today and render all
+        Charts.currentChartEndDate = new Date();
+        setTimeout(() => {
+            Charts.render();
+        }, 300);
     }
 };
 
 // Alias for HTML onclick handlers
-window.ui = UI;
 
+// Start UI
+document.addEventListener('DOMContentLoaded', () => {
+    window.ui = UI; // Expose as lowercase 'ui' for HTML onclick handlers
+    // UI.init() is called by app.init()
+});

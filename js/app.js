@@ -64,26 +64,67 @@ const app = {
         }
     },
 
-    openModal(id) {
-        document.getElementById(id).classList.remove('hidden');
-        UI.setupInputs();
+    openModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.classList.remove('hidden');
+            modal.classList.add('visible');
 
-        if (id === 'health-view') {
-            UI.renderHealthSection();
-        }
+            if (modalId === 'history-view') {
+                // Default to milk or last used? Let's default to milk for now, or ensure tabs are set up.
+                // Actually, let's just trigger a click on the active tab or default to first.
+                const activeTab = document.querySelector('#history-view .tab-btn.active');
+                if (activeTab) {
+                    activeTab.click();
+                } else {
+                    // If no active tab, default to milk
+                    UI.renderFullHistory('milk');
+                }
+            }
 
-        if (id === 'charts-view') {
-            setTimeout(() => Charts.render(), 300);
-        }
+            if (modalId === 'health-view') {
+                UI.renderHealthSection('appointments');
+            }
 
-        if (id === 'growth-modal') {
-            UI.renderGrowthHistory();
-            setTimeout(() => Charts.renderGrowthCharts(), 300);
+            if (modalId === 'charts-view') {
+                setTimeout(() => Charts.render(), 300);
+            }
+
+            if (modalId === 'growth-modal') {
+                UI.renderGrowthHistory();
+                setTimeout(() => Charts.renderGrowthCharts(), 300);
+            }
+
+            UI.setupInputs();
+
+            if (modalId === 'edit-profile-modal') {
+                const baby = Store.getCurrentBaby();
+                if (baby) {
+                    document.getElementById('edit-name').value = baby.name;
+                    document.getElementById('edit-dob').value = baby.dob.toISOString().split('T')[0];
+                    document.getElementById('edit-gender').value = baby.gender || 'Boy';
+                    document.getElementById('edit-weight').value = baby.currentWeight;
+                    document.getElementById('edit-height').value = baby.currentHeight;
+                }
+            }
         }
     },
 
-    closeModal(id) {
-        document.getElementById(id).classList.add('hidden');
+    closeModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.classList.remove('visible');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
+        }
+    },
+
+    async deleteAllData() {
+        if (confirm("Are you sure you want to delete ALL data? This action is irreversible and will delete all baby profiles from the cloud.")) {
+            await Store.deleteAllData();
+            window.location.reload();
+        }
     },
 
     openBabySwitcher() {
@@ -153,6 +194,12 @@ const app = {
         document.getElementById('baby-profile-card').classList.remove('hidden');
     },
 
+    handleProfileImageUpload(input) {
+        if (input.files && input.files[0]) {
+            this.handlePhotoUpload(input.files[0]);
+        }
+    },
+
     handlePhotoUpload(file) {
         if (!file) return;
 
@@ -205,12 +252,25 @@ const app = {
     },
 
     saveProfileUpdates() {
+        const baby = Store.getCurrentBaby();
+        const newWeight = parseFloat(document.getElementById('edit-weight').value);
+        const newHeight = parseFloat(document.getElementById('edit-height').value);
+
+        // Auto-record growth if changed
+        if (newWeight !== baby.currentWeight || newHeight !== baby.currentHeight) {
+            Store.addMeasurement({
+                date: new Date().toISOString(),
+                weight: newWeight,
+                height: newHeight
+            });
+        }
+
         const updates = {
             name: document.getElementById('edit-name').value,
             dob: new Date(document.getElementById('edit-dob').value),
             gender: document.getElementById('edit-gender').value,
-            currentWeight: parseFloat(document.getElementById('edit-weight').value),
-            currentHeight: parseFloat(document.getElementById('edit-height').value)
+            currentWeight: newWeight,
+            currentHeight: newHeight
         };
         Store.updateBaby(updates);
         UI.renderBabyProfile();
@@ -266,7 +326,7 @@ const app = {
             record.date = document.getElementById('health-date').value || new Date().toISOString();
         } else {
             record.dateAdministered = document.getElementById('health-date').value || new Date().toISOString();
-            record.dose = document.getElementById('health-dose').value;
+            record.dose = document.getElementById('vaccine-dose').value;
         }
 
         Store.addHealthRecord(type, record);
@@ -417,6 +477,60 @@ const app = {
         });
     },
 
+    quickUpdateStat(statType) {
+        const baby = Store.getCurrentBaby();
+        if (!baby) return;
+
+        // Store the stat type for later use
+        this.currentStatType = statType;
+
+        // Update modal title and label
+        const title = statType === 'weight' ? 'Update Weight' : 'Update Height';
+        const label = statType === 'weight' ? 'Weight (kg)' : 'Height (cm)';
+        const currentValue = statType === 'weight' ? baby.weight : baby.height;
+
+        document.getElementById('quick-update-title').textContent = title;
+        document.getElementById('quick-update-label').textContent = label;
+        document.getElementById('quick-update-value').value = currentValue || '';
+
+        this.openModal('quick-update-modal');
+    },
+
+    saveQuickUpdate() {
+        const value = parseFloat(document.getElementById('quick-update-value').value);
+        if (isNaN(value) || value <= 0) {
+            alert('Please enter a valid value');
+            return;
+        }
+
+        const baby = Store.getCurrentBaby();
+        if (!baby) return;
+
+        // Update the stat
+        if (this.currentStatType === 'weight') {
+            baby.weight = value;
+        } else {
+            baby.height = value;
+        }
+
+        // Add growth measurement record
+        const measurement = {
+            date: new Date(),
+            weight: baby.weight,
+            height: baby.height
+        };
+        baby.measurements.push(measurement);
+
+        // Save to localStorage and Firebase
+        Store.saveBaby(baby);
+
+        // Update UI
+        UI.renderBabyProfile();
+
+        // Close modal
+        this.closeModal('quick-update-modal');
+    },
+
     deleteAllData() {
         if (confirm("Are you sure? This cannot be undone.")) {
             Store.deleteAllData();
@@ -429,5 +543,11 @@ const app = {
 // Start App
 document.addEventListener('DOMContentLoaded', () => {
     window.app = app; // Ensure global access
+    window.ui = UI;   // Ensure global access for UI too just in case
     app.init();
+
+    // Safety check: Ensure profile card is visible if babies exist
+    if (Store.state.babies.length > 0) {
+        document.getElementById('baby-profile-card').classList.remove('hidden');
+    }
 });

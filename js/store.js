@@ -89,6 +89,26 @@ const Store = {
         this.save(); // Triggers cloud save
     },
 
+    updateBaby(updates) {
+        const baby = this.getCurrentBaby();
+        if (baby) {
+            Object.assign(baby, updates);
+            this.save();
+        }
+    },
+
+    async deleteAllData() {
+        if (!Auth.user) return;
+
+        // Delete each baby from cloud
+        const promises = this.state.babies.map(baby => this.deleteBabyFromCloud(baby.id));
+        await Promise.all(promises);
+
+        this.state.babies = [];
+        this.state.currentBabyId = null;
+        this.save(false); // Clear local state
+    },
+
     addMilkRecord(record) {
         const baby = this.getCurrentBaby();
         baby.milkRecords.push({
@@ -301,6 +321,11 @@ const Store = {
                 this.save(false); // Save to local, don't sync back
                 console.log("Data synced from cloud");
                 UI.init(); // Re-render
+                // Force profile card update
+                setTimeout(() => {
+                    UI.renderBabyProfile();
+                    UI.renderRecentHistory();
+                }, 100);
             } else {
                 // No remote data? Push local data if it's a new user or first sync
                 // But only if we have local data that isn't just the default empty one?
