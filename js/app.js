@@ -522,7 +522,7 @@ const app = {
         baby.measurements.push(measurement);
 
         // Save to localStorage and Firebase
-        Store.saveBaby(baby);
+        Store.save();
 
         // Update UI
         UI.renderBabyProfile();

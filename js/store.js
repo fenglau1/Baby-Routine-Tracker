@@ -30,7 +30,6 @@ const Store = {
 
     save(syncToCloud = true) {
         // Local Storage removed as per request
-        // localStorage.setItem('babyRoutineData', JSON.stringify(this.state));
 
         if (syncToCloud && Auth.user && this.state.currentBabyId) {
             const baby = this.getCurrentBaby();

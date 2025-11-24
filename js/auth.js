@@ -96,7 +96,7 @@ const Auth = {
     logout() {
         if (!auth) return;
 
-        auth.signOut().then(() => {
+        window.auth.signOut().then(() => {
             // Sign-out successful.
             // Optional: Clear local data or keep it? 
             // For now, we keep local data but stop syncing.
