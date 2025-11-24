@@ -405,9 +405,9 @@ const Store = {
     },
 
     deleteBabyFromCloud(id) {
-        if (!window.db || !Auth.user) return;
+        if (!window.db || !Auth.user) return Promise.resolve();
 
-        window.db.collection('babies').doc(id).delete()
+        return window.db.collection('babies').doc(id).delete()
             .then(() => console.log(`Baby ${id} deleted from cloud`))
             .catch(err => console.error("Cloud delete failed", err));
     },
