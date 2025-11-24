@@ -77,7 +77,25 @@ const Store = {
         this.save();
     },
 
-    // ... createDefaultBaby ...
+    createDefaultBaby() {
+        const newBaby = {
+            id: crypto.randomUUID(),
+            name: "My Baby",
+            dob: new Date(),
+            gender: "Boy",
+            currentWeight: 3.5,
+            currentHeight: 50,
+            profileImage: null,
+            milkRecords: [],
+            foodRecords: [],
+            poopRecords: [],
+            vaccines: [],
+            appointments: [],
+            measurements: [],
+            temperatureRecords: []
+        };
+        this.addBaby(newBaby);
+    },
 
     addBaby(baby) {
         if (Auth.user) {
@@ -362,7 +380,13 @@ const Store = {
         if (!baby.sharedWith.includes(email)) {
             baby.sharedWith.push(email);
             this.save(); // Will trigger cloud save
-            alert(`Shared ${baby.name} with ${email}`);
+
+            // Send Email via mailto
+            const subject = `Join me in tracking ${baby.name}'s routine`;
+            const body = `Hi,\n\nI've invited you to track ${baby.name}'s routine on Baby Routine App.\n\nPlease log in with this email address (${email}) to access the data.`;
+            window.location.href = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+
+            alert(`Shared ${baby.name} with ${email}. Email client opened.`);
             return Promise.resolve();
         } else {
             alert(`${email} already has access.`);

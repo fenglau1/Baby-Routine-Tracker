@@ -9,9 +9,11 @@ const Auth = {
     init() {
         console.log("Auth.init() called");
 
-        // Check for file protocol
+        // Check for file protocol - Enable Mock Mode
         if (window.location.protocol === 'file:') {
-            alert("Warning: Google Sign-In may not work when opening the file directly. Please use a local server (e.g., VS Code Live Server).");
+            console.warn("Running on file protocol. Enabling Mock Auth for testing.");
+            this.mockLogin();
+            return;
         }
 
         if (!window.auth) {
@@ -71,6 +73,42 @@ const Auth = {
                 this.updateUI();
             }
         });
+    },
+
+    mockLogin() {
+        this.user = {
+            uid: 'test-user-123',
+            email: 'test@example.com',
+            displayName: 'Test User',
+            photoURL: 'assets/default-baby.png'
+        };
+
+        // Mock DB
+        window.db = {
+            collection: () => ({
+                where: () => ({
+                    get: async () => ({ forEach: () => { } })
+                }),
+                doc: () => ({
+                    set: async () => Promise.resolve(),
+                    delete: async () => Promise.resolve()
+                })
+            })
+        };
+
+        this.updateUI();
+
+        // Simulate Sync
+        setTimeout(() => {
+            if (Store.state.babies.length === 0) {
+                app.addNewBaby();
+                // Hide close button on force create
+                const closeBtn = document.getElementById('create-baby-close-btn');
+                if (closeBtn) closeBtn.style.display = 'none';
+                const title = document.querySelector('#create-baby-modal h3');
+                if (title) title.textContent = 'Welcome! Add a Baby';
+            }
+        }, 500);
     },
 
     login() {
