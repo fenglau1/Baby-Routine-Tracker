@@ -529,14 +529,6 @@ const app = {
 
         // Close modal
         this.closeModal('quick-update-modal');
-    },
-
-    deleteAllData() {
-        if (confirm("Are you sure? This cannot be undone.")) {
-            Store.deleteAllData();
-            UI.init();
-            this.closeModal('settings-modal');
-        }
     }
 };
 
